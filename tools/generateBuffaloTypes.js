@@ -40,14 +40,14 @@ out(`type ValueOf<T extends object> = T[keyof T]\n\n`)
 function outConstType(calf, name) {
     const isRoot = calf.type != null
 
-    if (!isEmpty(calf.types) || isRoot) {
+    if (!isEmpty(calf.subtypes) || isRoot) {
         out(`readonly ${name} : {\n`, +1)
 
         if (isRoot)
             out(`readonly _objectType: ${name}\n`)
 
-        for (const type of calf.types) {
-            outConstType(type, type.name)
+        for (const subtype of calf.subtypes) {
+            outConstType(subtype, subtype.name)
         } 
 
         out('}\n', -1)
@@ -117,21 +117,21 @@ function outDataType(calf, path, typeKey) {
         out('}', -1)
     }
 
-    const hasTypes = calf.types.length > 0
-    if (hasTypes && hasFields)
+    const isAbstract = calf.subtypes.length > 0
+    if (isAbstract && hasFields)
         out(" & (\n", +1)
     
-    for (let i = 0; i < calf.types.length; i++) {
-        const type = calf.types[i]
-        outDataType(type, path.concat(type.name), calf.typeKey)
+    for (let i = 0; i < calf.subtypes.length; i++) {
+        const subtype = calf.subtypes[i]
+        outDataType(subtype, path.concat(subtype.name), calf.typeKey)
 
-        if (i < calf.types.length - 1) 
+        if (i < calf.subtypes.length - 1)
             out(" | ")
         else
             out("\n")
     }
 
-    if (hasTypes && hasFields)
+    if (isAbstract && hasFields)
         out(')', -1)
 }
 

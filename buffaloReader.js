@@ -51,7 +51,7 @@ function parseType(buffalo, typeString, path) {
 }
 
 function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
-    const types = []
+    const subtypes = []
     const fields = {}
 
     for (const childName in calf) {
@@ -60,8 +60,8 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
             linkDataDefinition(buffalo, child, `${path}/${childName}`, {...fieldScope})
 
             child.name = childName
-            child.index = types.length
-            types.push(child)
+            child.index = subtypes.length
+            subtypes.push(child)
         } else {
             if (childName in fieldScope) {
                 throw new Error(`Multiple definitions for field '${childName}' in '${path}' (first defined in '${fieldScope[childName]}').`)
@@ -82,11 +82,11 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
         }
     }
 
-    const isAbstract = types.length > 0
+    const isAbstract = subtypes.length > 0
     if (isAbstract && calf.typeKey == null)
         throw new Error(`No type field defined for abstract type '${path}'`)
 
-    calf.types = types;
+    calf.subtypes = subtypes;
     calf.fields = fields;
 }
 
@@ -97,10 +97,10 @@ function parseEnum(calf, name) {
         if (value in values)
             throw new Error(`Duplicate enum value '${value}' at '${name}'.`)
 
-        values[value] = { value: i }
+        values[value] = { index: i, name: value }
     }
 
-    values.values = { ...values }
+    values.values = calf.map((name) => values[name])
     values.type = "enum"
     values.typeName = name
 

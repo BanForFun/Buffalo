@@ -1,6 +1,6 @@
 const { SmartBuffer } = require('smart-buffer')
 
-const { schemaTypeIndices, schemaTypes } = require('./buffaloTypes')
+const { schemaTypeIndices} = require('./buffaloTypes')
 
 /**
  * @typedef {object} Field

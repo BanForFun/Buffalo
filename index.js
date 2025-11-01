@@ -11,7 +11,7 @@ const testBuffalo = readBuffalo('testBuffalo.yaml')
 const startTime = performance.now()
 
 const buffer = serializeBuffalo(testBuffalo.Token, {
-    expiration: Date.now(),
+    expiration: 3,
     signature: Buffer.alloc(32),
     payload: {
         userId: Buffer.alloc(16),
