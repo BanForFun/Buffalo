@@ -126,13 +126,13 @@ function writeProperties(calf, object, packet) {
         return
     }
 
-    const typeKey = calf.typeKey
-    if (typeKey != null) {
-        // console.log("Writing type key")
+    const subtypeKey = calf.subtypeKey
+    if (subtypeKey != null) {
+        // console.log("Writing subtype key")
 
-        const type = object[typeKey]
-        packet.writeUInt8(type.index)
-        writeProperties(type, object, packet)
+        const subtype = object[subtypeKey]
+        packet.writeUInt8(subtype.index)
+        writeProperties(subtype, object, packet)
     }
 
     for (const fieldName in calf.fields) {

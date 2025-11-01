@@ -70,10 +70,10 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
             }
 
             if (child === typeType) {
-                if (calf.typeKey != null)
-                    throw new Error(`Duplicate type field '${childName}' in '${path}' (conflicting with '${calf.typeKey}')`)
+                if (calf.subtypeKey != null)
+                    throw new Error(`Duplicate type field '${childName}' in '${path}' (conflicting with '${calf.subtypeKey}')`)
 
-                calf.typeKey = childName
+                calf.subtypeKey = childName
             } else {
                 fields[childName] = parseType(buffalo, child, path)
             }
@@ -83,7 +83,7 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
     }
 
     const isAbstract = subtypes.length > 0
-    if (isAbstract && calf.typeKey == null)
+    if (isAbstract && calf.subtypeKey == null)
         throw new Error(`No type field defined for abstract type '${path}'`)
 
     calf.subtypes = subtypes;

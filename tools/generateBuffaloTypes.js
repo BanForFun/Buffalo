@@ -3,6 +3,14 @@ const path = require('node:path')
 const readBuffalo = require('../buffaloReader')
 const { typescriptTypes } = require('../buffaloTypes')
 
+function isEmpty(object) {
+    for (let _ in object) {
+        return false;
+    }
+
+    return true;
+}
+
 if (process.argv.length < 3) {
     console.error("Usage: node generateBuffaloTypes.js BUFFALO_FILE")
     process.exit(1)
@@ -57,7 +65,7 @@ function outConstType(calf, name) {
 }
 
 function outEnumValues(calf, name) {
-    if (!isEmpty(calf.values)) {
+    if (calf.values.length > 0) {
         out(`readonly ${name} : {\n`, +1)
 
         for (const {name} of calf.values)
@@ -83,14 +91,6 @@ for (const calfName in buffalo) {
 }
 out('}\n\n', -1)
 
-function isEmpty(object) {
-    for (let _ in object) {
-        return false;
-    }
-
-    return true;
-}
-
 function resolveFieldType(field) {
     if (typeof field !== "object") return "never";
 
@@ -101,13 +101,13 @@ function resolveFieldType(field) {
     return resolvedType + arrayNotation
 }
 
-function outDataType(calf, path, typeKey) {
-    const hasFields = !isEmpty(calf.fields) || typeKey != null
+function outDataType(calf, path, subtypeKey) {
+    const hasFields = !isEmpty(calf.fields) || subtypeKey != null
     if (hasFields) {
         out('{\n', +1)
 
-        if (typeKey != null)
-            out(`"${typeKey}": ${typeOf(...path)},\n`)
+        if (subtypeKey != null)
+            out(`"${subtypeKey}": ${typeOf(...path)},\n`)
 
         for (const fieldName in calf.fields) {
             const field = calf.fields[fieldName];
@@ -123,7 +123,7 @@ function outDataType(calf, path, typeKey) {
     
     for (let i = 0; i < calf.subtypes.length; i++) {
         const subtype = calf.subtypes[i]
-        outDataType(subtype, path.concat(subtype.name), calf.typeKey)
+        outDataType(subtype, path.concat(subtype.name), calf.subtypeKey)
 
         if (i < calf.subtypes.length - 1)
             out(" | ")
