@@ -16,30 +16,12 @@ const { schemaTypeIndices} = require('./buffaloTypes')
  * @param {SmartBuffer} packet
  * @returns 
  */
-function writePropertyIfNotConstant(field, value, packet) {
-    if (typeof field === 'object')
-        writeProperty(field, value, packet)
-}
-
-/**
- * 
- * @param {Field|number} field
- * @param {any} value 
- * @param {SmartBuffer} packet
- * @returns 
- */
 function writeProperty(field, value, packet) {
-    if (typeof field === 'number') {
-        packet.writeUInt32LE(field) // Writing the field and not the value on purpose
-        return;
-    }
-
-    if (typeof field !== 'object')
-        throw new Error('Invalid field format')
+    if (typeof field !== 'object') return; // Is constant
 
     if (field.dimensions.length > 0) {
         const dimensionField = field.dimensions.at(-1)
-        writePropertyIfNotConstant(dimensionField, value.length, packet);
+        writeProperty(dimensionField, value.length, packet);
         
         for (const item of value)
             writeProperty({
@@ -102,11 +84,11 @@ function writeProperty(field, value, packet) {
         case schemaTypeIndices.UIntArray:
         case schemaTypeIndices.ULongArray:
         case schemaTypeIndices.BooleanArray:
-            writePropertyIfNotConstant(field.size, value.length, packet)
+            writeProperty(field.size, value.length, packet)
             packet.writeBuffer(Buffer.from(value))
             break;
         case schemaTypeIndices.Buffer:
-            writePropertyIfNotConstant(field.size, value.size, packet)
+            writeProperty(field.size, value.size, packet)
             packet.writeBuffer(value)
             break;
         default:
@@ -138,7 +120,11 @@ function writeProperties(calf, object, packet) {
 
     for (const fieldName in calf.fields) {
         const field = calf.fields[fieldName]
-        writeProperty(field, object[fieldName], packet)
+        if (typeof field === 'number') {
+            packet.writeUInt32LE(field) // Writing the field and not the value on purpose
+        } else {
+            writeProperty(field, object[fieldName], packet)
+        }
     }
 }
 

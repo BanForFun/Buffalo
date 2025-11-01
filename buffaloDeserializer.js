@@ -7,32 +7,12 @@ const {schemaTypeIndices} = require("./buffaloTypes");
  * @param {SmartBuffer} packet
  * @returns {any}
  */
-function readPropertyIfNotConstant(field, packet) {
-    if (typeof field === 'object')
-        return readProperty(field, packet)
-
-    return field
-}
-
-/**
- *
- * @param {Field|number} field
- * @param {SmartBuffer} packet
- * @returns {any}
- */
 function readProperty(field, packet) {
-    if (typeof field === 'number') {
-        const value = packet.readUInt32LE()
-        if (value !== field) throw new Error(`Packet was not encoded with the same schema version.`)
-        return undefined;
-    }
-
-    if (typeof field !== 'object')
-        throw new Error('Invalid field format')
+    if (typeof field !== 'object') return field; // Constant
 
     if (field.dimensions.length > 0) {
         const dimensionField = field.dimensions.at(-1)
-        const length = readPropertyIfNotConstant(dimensionField, packet);
+        const length = readProperty(dimensionField, packet);
 
         const array = [];
         for (let i = 0; i < length; i++) {
@@ -74,39 +54,39 @@ function readProperty(field, packet) {
                 return packet.readBigUInt64LE()
             case schemaTypeIndices.IntArray:
                 return new Int32Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Int32Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Int32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ShortArray:
                 return new Int16Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Int16Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Int16Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ByteArray:
                 return new Int8Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Int8Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Int8Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.LongArray:
                 return new BigInt64Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * BigInt64Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * BigInt64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.FloatArray:
                 return new Float32Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Float32Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Float32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.DoubleArray:
                 return new Float64Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Float64Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Float64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UByteArray:
                 return new Uint8Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Uint8Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Uint8Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UShortArray:
                 return new Uint16Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Uint16Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Uint16Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UIntArray:
                 return new Uint32Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Uint32Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Uint32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ULongArray:
                 return new BigUint64Array(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * BigUint64Array.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * BigUint64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.BooleanArray:
                 return new Uint8ClampedArray(packet.readBuffer(
-                    readPropertyIfNotConstant(field.size, packet) * Uint8ClampedArray.BYTES_PER_ELEMENT))
+                    readProperty(field.size, packet) * Uint8ClampedArray.BYTES_PER_ELEMENT))
             case schemaTypeIndices.Buffer:
-                return packet.readBuffer(readPropertyIfNotConstant(field.size, packet))
+                return packet.readBuffer(readProperty(field.size, packet))
             default:
                 throw new Error(`Invalid built-in type with index ${field.base}`)
         }
@@ -135,10 +115,14 @@ function readProperties(calf, object, packet) {
     }
 
     for (const fieldName in calf.fields) {
-        const value = readProperty(calf.fields[fieldName], packet);
-        if (value === undefined) continue;
+        const field = calf.fields[fieldName];
 
-        object[fieldName] = value;
+        if (typeof field === 'number') {
+            if (packet.readUInt32LE() !== field)
+                throw new Error(`Packet was not encoded with the same schema version.`)
+        } else {
+            object[fieldName] = readProperty(field, packet);
+        }
     }
 }
 
