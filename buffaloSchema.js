@@ -16,8 +16,9 @@ const buffaloSchema = {
                 "^[a-z][a-zA-Z]*$": {
                     "anyOf": [
                         { "type": "string", "pattern": `^${arrayTypePattern}\\(${lengthTypePattern}\\)${arraySuffixPattern}$` },
-                        { "type": "string", "pattern": `^(?!${typeType})(?!${arrayTypePattern})[A-Z][a-zA-Z]*${arraySuffixPattern}$` },
+                        { "type": "string", "pattern": `^(?!${typeType})(?!${arrayTypePattern})[A-Z][a-zA-Z]+${arraySuffixPattern}$` },
                         { "type": "string", "const": typeType },
+                        { "type": "number" },
                     ]
                 },
                 "^[A-Z][a-zA-Z]*$": { "$ref": "#/$defs/DataDefinition" }

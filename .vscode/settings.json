@@ -1,5 +1,0 @@
-{
-    "yaml.schemas": {
-        "./schema.json": "*.yaml"
-    }
-}

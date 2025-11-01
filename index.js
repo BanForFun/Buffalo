@@ -1,3 +1,5 @@
+const { performance } = require('node:perf_hooks');
+
 const readBuffalo = require('./buffaloReader')
 const serializeBuffalo = require('./buffaloSerializer')
 
@@ -6,6 +8,7 @@ const serializeBuffalo = require('./buffaloSerializer')
  */
 const testBuffalo = readBuffalo('testBuffalo.yaml')
 
+const startTime = performance.now()
 
 const buffer = serializeBuffalo(testBuffalo.Token, {
     expiration: Date.now(),
@@ -22,5 +25,8 @@ const buffer = serializeBuffalo(testBuffalo.Token, {
     }
 })
 
+const endTime = performance.now()
 
-console.log(buffer, buffer.byteLength)
+
+console.log(buffer.toString('hex').match(/../g).join(' '))
+console.log('Serialized', buffer.byteLength, 'bytes in', endTime - startTime, 'milliseconds')

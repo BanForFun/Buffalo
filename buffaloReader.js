@@ -1,13 +1,102 @@
 const fs = require("node:fs")
 const yaml = require('yaml')
+const Ajv = require("ajv");
 
-const validateBuffalo = require('./buffaloValidator')
 const { schemaTypes, typeType } = require('./buffaloTypes')
+const buffaloSchema = require("./buffaloSchema");
+
+const ajv = new Ajv()
+const validateBuffalo = ajv.compile(buffaloSchema)
+
+const sizePattern = /^\d+$/
+const baseTypePattern = /^[A-Z][a-zA-Z]+/
+const parameterPattern = /\(([A-Z][a-zA-Z]+|\d+)\)/y
+const dimensionPattern = /\[([A-Z][a-zA-Z]+|\d+)]/gy
+
+function resolveType(buffalo, typeString, path) {
+    const schemaTypeIndex = schemaTypes.indexOf(typeString)
+    if (schemaTypeIndex >= 0) return schemaTypeIndex
+
+    const resolved = buffalo[typeString]
+    if (!resolved) throw new Error(`Unknown type '${typeString}' at '${path}'.`)
+
+    return resolved
+}
+
+function parseType(buffalo, typeString, path) {
+    if (sizePattern.test(typeString)) return +(typeString)
+
+    const baseType = baseTypePattern.exec(typeString)?.[0]
+    if (baseType == null) throw new Error(`Expected type at '${path}'.`)
+
+    const type = {
+        base: resolveType(buffalo, baseType, path),
+        dimensions: [],
+        size: null
+    }
+
+    parameterPattern.lastIndex = baseType.length
+    const sizeParameter = parameterPattern.exec(typeString)?.[1]
+    if (sizeParameter != null) {
+        type.size = parseType(buffalo, sizeParameter, path)
+        dimensionPattern.lastIndex = parameterPattern.lastIndex
+    } else {
+        dimensionPattern.lastIndex = baseType.length
+    }
+
+    type.dimensions = Array.from(typeString.matchAll(dimensionPattern))
+        .map(match => parseType(buffalo, match[1], path))
+
+    return type
+}
+
+function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
+    const types = []
+    const fields = {}
+
+    for (const childName in calf) {
+        const child = calf[childName]
+        if (typeof child === 'object') {
+            linkDataDefinition(buffalo, child, `${path}/${childName}`, {...fieldScope})
+
+            child.name = childName
+            child.index = types.length
+            types.push(child)
+        } else {
+            if (childName in fieldScope) {
+                throw new Error(`Multiple definitions for field '${childName}' in '${path}' (first defined in '${fieldScope[childName]}').`)
+            } else {
+                fieldScope[childName] = path
+            }
+
+            if (child === typeType) {
+                if (calf.typeKey != null)
+                    throw new Error(`Duplicate type field '${childName}' in '${path}' (conflicting with '${calf.typeKey}')`)
+
+                calf.typeKey = childName
+            } else {
+                fields[childName] = parseType(buffalo, child, path)
+            }
+
+            delete calf[childName]
+        }
+    }
+
+    const isAbstract = types.length > 0
+    if (isAbstract && calf.typeKey == null)
+        throw new Error(`No type field defined for abstract type '${path}'`)
+
+    calf.types = types;
+    calf.fields = fields;
+}
 
 function parseEnum(calf, name) {
     const values = {};
     for (let i = 0; i < calf.length; i++) {
         const value = calf[i];
+        if (value in values)
+            throw new Error(`Duplicate enum value '${value}' at '${name}'.`)
+
         values[value] = { value: i }
     }
 
@@ -18,98 +107,20 @@ function parseEnum(calf, name) {
     return Object.freeze(values);
 }
 
-function resolveType(buffalo, type) {
-    if (/^\d+$/.test(type)) return type
-
-    const schemaTypeIndex = schemaTypes.indexOf(type)
-    if (schemaTypeIndex >= 0) return schemaTypeIndex
-
-    const resolved = buffalo[type]
-    if (!resolved) throw new Error(`Unknown type '${type}'`) //TODO: Better tracability
-
-    return resolved
-}
-
-function createType() {
-    return {
-        base: "",
-        dimensions: [],
-        size: null
-    }
-}
-
-function parseType(buffalo, string) {
-    const stack = [createType()]
-
-    for (const char of string) {
-        const current = stack.at(-1)
-        switch(char) {
-        case '(':
-            const sizeParam = createType()
-            current.size = sizeParam
-
-            stack.push(sizeParam)
-            break;
-        case '[':
-            const dimension = createType()
-            current.dimensions.push(dimension)
-
-            stack.push(dimension)
-            break;
-        case ']':
-        case ')':
-            current.base = resolveType(buffalo, current.base)
-            stack.pop()
-            break;
-        default: 
-            current.base += char;
-            break;
-        }
-    }
-
-    const root = stack[0]
-    root.base = resolveType(buffalo, root.base)
-
-    return root;
-}
-
-function linkData(buffalo, calf) {
-    const types = []
-    const fields = {}
-
-    for (const childName in calf) {
-        const child = calf[childName]
-        if (typeof child === 'object') {
-            linkData(buffalo, child)
-
-            child.name = childName
-            child.index = types.length
-            types.push(child)
-        } else {
-            delete calf[childName]
-
-            if (child === typeType) {
-                calf.typeKey = childName
-            } else {
-                fields[childName] = parseType(buffalo, child)
-            }
-        }
-    }
-
-    calf.types = types
-    calf.fields = fields
-}
-
 function readBuffalo(path) {
     const buffalo = yaml.parse(fs.readFileSync(path, "utf8"))
-    validateBuffalo(buffalo)
+
+    if (!validateBuffalo(buffalo)) {
+        console.error(ajv.errors?.reverse())
+        throw new Error('Schema validation failed')
+    }
 
     for (const calfName in buffalo) {
         const calf = buffalo[calfName];
         if (Array.isArray(calf)) {
             buffalo[calfName] = parseEnum(calf, calfName)
         } else {
-            linkData(buffalo, calf)
+            linkDataDefinition(buffalo, calf, [calfName])
             calf.type = "data"
             calf.typeName = calfName
         }

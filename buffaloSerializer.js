@@ -1,6 +1,6 @@
 const { SmartBuffer } = require('smart-buffer')
 
-const { schemaTypeIndices } = require('./buffaloTypes')
+const { schemaTypeIndices, schemaTypes } = require('./buffaloTypes')
 
 /**
  * @typedef {object} Field
@@ -11,24 +11,32 @@ const { schemaTypeIndices } = require('./buffaloTypes')
 
 /**
  * 
- * @param {Field} field 
+ * @param {Field|number} field
  * @param {any} value 
  * @param {SmartBuffer} packet
  * @returns 
  */
 function writePropertyIfNotConstant(field, value, packet) {
-    if (typeof field.base !== 'string')
+    if (typeof field === 'object')
         writeProperty(field, value, packet)
 }
 
 /**
  * 
- * @param {Field} field 
+ * @param {Field|number} field
  * @param {any} value 
  * @param {SmartBuffer} packet
  * @returns 
  */
 function writeProperty(field, value, packet) {
+    if (typeof field === 'number') {
+        packet.writeUInt32LE(field) // Writing the field and not the value on purpose
+        return;
+    }
+
+    if (typeof field !== 'object')
+        throw new Error('Invalid field format')
+
     if (field.dimensions.length > 0) {
         const dimensionField = field.dimensions.pop()
         writePropertyIfNotConstant(dimensionField, value.length, packet);
@@ -40,11 +48,10 @@ function writeProperty(field, value, packet) {
     }
 
     if (typeof field.base === 'number') {
+        // console.log("Writing field", schemaTypes[field.base], "at", packet.writeOffset)
+
         // Built-in type
         switch(field.base) {
-        case schemaTypeIndices.Uuid:
-            packet.writeBuffer(value)
-            break;
         case schemaTypeIndices.String:
             packet.writeStringNT(value)
             break;
@@ -100,25 +107,20 @@ function writeProperty(field, value, packet) {
             packet.writeBuffer(value)
             break;
         default:
-            throw new Error(`Unknown built-in type with index ${field.type}`)  //TODO: Better tracability
+            throw new Error(`Invalid built-in type with index ${field.base}`)
         }
     } else if (typeof field.base === 'object') {
         // Referenced type
         writeProperties(field.base, value, packet)
     } else {
-        // Constant type
-        throw new Error('Constant types not allowed inside packets')  //TODO: Better tracability
+        // Invalid type
+        throw new Error('Invalid field base type format')
     }
 }
 
-/**
- * @template T
- * @param {T} calf 
- * @param {T["_objectType"]} object 
- * @param {SmartBuffer} packet
- * @returns {void}
- */
 function writeProperties(calf, object, packet) {
+    // console.log("Writing", calf.typeName ?? calf.name)
+
     if (calf.type === "enum") {
         packet.writeUInt8(object.index)
         return
@@ -126,6 +128,8 @@ function writeProperties(calf, object, packet) {
 
     const typeKey = calf.typeKey
     if (typeKey != null) {
+        // console.log("Writing type key")
+
         const type = object[typeKey]
         packet.writeUInt8(type.index)
         writeProperties(type, object, packet)
@@ -140,8 +144,7 @@ function writeProperties(calf, object, packet) {
 /**
  * @template T
  * @param {T} calf 
- * @param {T["_objectType"]} object 
- * @param {SmartBuffer} buffer
+ * @param {T["_objectType"]} object
  * @returns {Buffer}
  */
 function serializeBuffalo(calf, object) {

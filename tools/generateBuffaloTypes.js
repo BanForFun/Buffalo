@@ -91,6 +91,16 @@ function isEmpty(object) {
     return true;
 }
 
+function resolveFieldType(field) {
+    if (typeof field !== "object") return "never";
+
+    const { base, dimensions } = field;
+    const resolvedType = typeof base === 'number' ? typescriptTypes[base] : base.typeName
+    const arrayNotation = dimensions.map(() => "[]").join("")
+
+    return resolvedType + arrayNotation
+}
+
 function outDataType(calf, path, typeKey) {
     const hasFields = !isEmpty(calf.fields) || typeKey != null
     if (hasFields) {
@@ -100,12 +110,8 @@ function outDataType(calf, path, typeKey) {
             out(`"${typeKey}": ${typeOf(...path)},\n`)
 
         for (const fieldName in calf.fields) {
-            const { base, dimensions } = calf.fields[fieldName];
-            
-            const resolvedType = typeof base === 'number' ? typescriptTypes[base] : base.typeName
-            const arrayNotation = dimensions.map(() => "[]").join("")
-
-            out(`"${fieldName}": ${resolvedType}${arrayNotation},\n`)
+            const field = calf.fields[fieldName];
+            out(`"${fieldName}": ${resolveFieldType(field)},\n`)
         }
 
         out('}', -1)
