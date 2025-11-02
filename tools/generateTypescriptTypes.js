@@ -1,7 +1,7 @@
 const process = require('node:process')
 const path = require('node:path')
 const readBuffalo = require('../buffaloReader')
-const { typescriptTypes } = require('../buffaloTypes')
+const { nativeTypes } = require('../buffaloTypes')
 const Printer = require('./models/Printer')
 const { isEmpty } = require('./utils/objectUtils')
 const {getOutputStream} = require("./utils/fileUtils");
@@ -74,7 +74,7 @@ function resolveFieldType(field) {
     if (typeof field !== "object") return "never";
 
     const { base, dimensions } = field;
-    const resolvedType = typeof base === 'number' ? typescriptTypes[base] : base.typeName
+    const resolvedType = typeof base === 'number' ? nativeTypes[base].ts : base.typeName
     const arrayNotation = dimensions.map(() => "[]").join("")
 
     return resolvedType + arrayNotation
@@ -121,7 +121,7 @@ for (const calfName in buffalo) {
         out(`export type ${calfName} = ValueOf<${typeOf(calfName)}>\n\n`)
     } else if (calf.type === "data") {
         out(`export type ${calfName} = `)
-        outDataType(calf, [calfName])
+        outDataType(calf, [calfName], null)
         out("\n\n")
     } else {
         throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
