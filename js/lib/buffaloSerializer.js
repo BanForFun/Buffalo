@@ -107,6 +107,15 @@ function writeProperty(field, value, packet, dimension = field.dimensions?.lengt
 function writeProperties(calf, object, packet) {
     // console.log("Writing", calf.typeName ?? calf.name)
 
+    for (const constName in calf.constants) {
+        const field = calf.constants[constName]
+        if (typeof field === 'number') {
+            packet.writeUInt8(field) // Writing the field and not the value on purpose
+        } else {
+            throw new Error('Invalid constant type')
+        }
+    }
+
     const subtypeKey = calf.subtypeKey
     if (subtypeKey != null) {
         // console.log("Writing subtype key")
@@ -116,13 +125,9 @@ function writeProperties(calf, object, packet) {
         writeProperties(subtype, object, packet)
     }
 
-    for (const fieldName in calf.fields) {
-        const field = calf.fields[fieldName]
-        if (typeof field === 'number') {
-            packet.writeUInt32LE(field) // Writing the field and not the value on purpose
-        } else {
-            writeProperty(field, object[fieldName], packet)
-        }
+    for (const varName in calf.variables) {
+        const field = calf.variables[varName]
+        writeProperty(field, object[varName], packet)
     }
 }
 

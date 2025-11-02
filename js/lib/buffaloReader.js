@@ -53,7 +53,8 @@ function parseType(buffalo, typeString, path) {
 
 function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
     const subtypes = []
-    const fields = {}
+    const variables = {}
+    const constants = {}
 
     for (const childName in calf) {
         const child = calf[childName]
@@ -80,7 +81,11 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
 
                 calf.subtypeKey = childName
             } else {
-                fields[childName] = parseType(buffalo, child, path)
+                const fieldType = parseType(buffalo, child, path)
+                if (typeof fieldType === 'object')
+                    variables[childName] = fieldType
+                else
+                    constants[childName] = fieldType
             }
 
             delete calf[childName]
@@ -92,7 +97,8 @@ function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
         throw new Error(`No type field defined for abstract type '${path}'`)
 
     calf.subtypes = subtypes;
-    calf.fields = fields;
+    calf.variables = variables;
+    calf.constants = constants;
 }
 
 function parseEnum(calf, enumName) {

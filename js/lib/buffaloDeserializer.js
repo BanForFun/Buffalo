@@ -104,6 +104,16 @@ function readProperty(field, packet, dimension = field.dimensions?.length) {
 }
 
 function readProperties(calf, object, packet) {
+    for (const constName in calf.constants) {
+        const field = calf.constants[constName];
+        if (typeof field === 'number') {
+            if (packet.readUInt8() !== field)
+                throw new Error(`Packet was not encoded with the same schema version`)
+        } else {
+            throw new Error('Invalid constant type')
+        }
+    }
+
     const subtypeKey = calf.subtypeKey
     if (subtypeKey != null) {
         const typeIndex = packet.readUInt8()
@@ -112,15 +122,9 @@ function readProperties(calf, object, packet) {
         readProperties(subtype, object, packet, )
     }
 
-    for (const fieldName in calf.fields) {
-        const field = calf.fields[fieldName];
-
-        if (typeof field === 'number') {
-            if (packet.readUInt32LE() !== field)
-                throw new Error(`Packet was not encoded with the same schema version.`)
-        } else {
-            object[fieldName] = readProperty(field, packet);
-        }
+    for (const varName in calf.variables) {
+        const field = calf.variables[varName];
+        object[varName] = readProperty(field, packet);
     }
 }
 

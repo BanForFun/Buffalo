@@ -79,19 +79,20 @@ function resolveFieldType(field) {
 }
 
 function outDataType(calf, path, subtypeKey) {
-    const hasFields = !isEmpty(calf.fields) || subtypeKey != null
+    const hasFields = !isEmpty(calf.variables) || !isEmpty(calf.constants) || subtypeKey != null
     if (hasFields) {
         out('{\n', +1)
 
         if (subtypeKey != null)
             out(`${subtypeKey}: ${typeOf(...path)},\n`)
 
-        for (const fieldName in calf.fields) {
-            const field = calf.fields[fieldName];
-            if (typeof field !== "object")
-                out(`${fieldName}?: never,\n`)
-            else
-                out(`${fieldName}: ${resolveFieldType(field)},\n`)
+        for (const varName in calf.variables) {
+            const field = calf.variables[varName];
+            out(`${varName}: ${resolveFieldType(field)},\n`)
+        }
+
+        for (const constName in calf.constants) {
+            out(`${constName}?: never,\n`)
         }
 
         out('}', -1)
