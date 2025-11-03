@@ -1,4 +1,4 @@
 package gr.elaevents.buffalo.schema
 
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.PROPERTY)
 annotation class FieldDimensions(vararg val dimensions: FieldSize)

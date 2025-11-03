@@ -34,7 +34,7 @@ function outEnumValues(calf, name) {
 function nativeType(field) {
     const { base, dimensions } = field;
     const resolvedType = typeof base === 'number' ? nativeTypes[base].kt : base.typeName
-    const arrayPrefix = dimensions.map(() => "List<").join("")
+    const arrayPrefix = dimensions.map(() => "Array<").join("")
     const arraySuffix = dimensions.map(() => ">").join("")
 
     return arrayPrefix + resolvedType + arraySuffix
@@ -108,9 +108,9 @@ function outDataType(calf, name, superName, superVars, header) {
         }
 
         if (superName)
-            out(`): ${superName}\n`, -1)
+            out(`): ${superName}, BuffaloPacket()\n`, -1)
         else
-            out(')\n', -1)
+            out('): BuffaloPacket()\n', -1)
     }
 }
 

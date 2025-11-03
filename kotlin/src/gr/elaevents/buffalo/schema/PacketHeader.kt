@@ -3,4 +3,4 @@
 package gr.elaevents.buffalo.schema
 
 @Target(AnnotationTarget.CLASS)
-annotation class PacketHeader(vararg val byte: UByte)
+annotation class PacketHeader(vararg val bytes: UByte)

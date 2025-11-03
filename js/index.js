@@ -7,10 +7,10 @@ const deserializeBuffalo = require('./lib/buffaloDeserializer')
 /**
  * @type {import('./buffalo').buffalo}
  */
-const buffalo = readBuffalo('buffalo.yaml')
+const buffalo = readBuffalo('../buffalo.yaml')
 
 const testData = {
-    expiration: Date.now(),
+    expiration: 1000,
     signature: Buffer.alloc(32),
     payload: {
         userId: Buffer.alloc(16),

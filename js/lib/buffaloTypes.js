@@ -1,8 +1,7 @@
 const lengthTypes = {
     "UByte":        { ts: "number",     kt: "UByte" },
     "UShort":       { ts: "number",     kt: "UShort" },
-    "UInt":         { ts: "number",     kt: "UInt" },
-    "ULong":        { ts: "BigInt",     kt: "ULong" },
+    "Int":          { ts: "number",     kt: "Int" },
 }
 
 const primitiveTypes = {
@@ -11,10 +10,12 @@ const primitiveTypes = {
     "Boolean":      { ts: "boolean",    kt: "Boolean" },
     "Byte":         { ts: "number",     kt: "Byte" },
     "Short":        { ts: "number",     kt: "Short" },
-    "Int":          { ts: "number",     kt: "Int" },
+
     "Long":         { ts: "BigInt",     kt: "Long" },
     "Float":        { ts: "number",     kt: "Float" },
     "Double":       { ts: "number",     kt: "Double" },
+    "UInt":         { ts: "number",     kt: "UInt" },
+    "ULong":        { ts: "BigInt",     kt: "ULong" },
 }
 
 const arrayTypes = {
