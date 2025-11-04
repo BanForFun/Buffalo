@@ -132,20 +132,20 @@ function writeOwnVariables(type, object, packet) {
 
 function writeCalf(calf, object, packet) {
     const leafTypeIndex = findLeafTypeIndex(calf, object)
-    const subtypeType = calf.leafTypes[leafTypeIndex]
+    const leafTypePath = calf.leafTypes[leafTypeIndex]
 
     writeOwnConstants(calf, packet)
 
     if (calf.leafTypes.length > 1)
         packet.writeUInt8(leafTypeIndex) //Will get replaced
 
-    for (const type of subtypeType) {
+    for (const type of leafTypePath) {
         writeOwnConstants(type, packet)
     }
 
     writeOwnVariables(calf, object, packet)
 
-    for (const type of subtypeType) {
+    for (const type of leafTypePath) {
         writeOwnVariables(type, object, packet)
     }
 }
