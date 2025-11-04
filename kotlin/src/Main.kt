@@ -16,13 +16,15 @@ fun main() {
         )
     )
 
+    repeat(10_000) { serializeBuffalo(token) }
 
-    val buffer: Buffer
     val time = measureTime {
-        buffer = serializeBuffalo(token)
+        repeat(1_000) { serializeBuffalo(token) }
     }
 
-    val bytes = buffer.readByteArray()
+    println("Took ${time / 1_000}")
+
+    val bytes = serializeBuffalo(token).readByteArray()
     println(bytes.joinToString(" ") { "%02X".format(it) })
-    println("Serialized ${bytes.size} bytes in $time")
+    println("Serialized ${bytes.size} bytes")
 }

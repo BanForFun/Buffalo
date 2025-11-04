@@ -17,23 +17,23 @@ const objectName = path.basename(inputPath, ".yaml")
 const outputStream = getOutputStream(process.argv[3], objectName + ".kt")
 const { out } = new Printer(outputStream)
 
-function outEnumValues(calf, name) {
+function outEnumValues(calf) {
     out('\n')
     if (calf.values.length > 0) {
-        out(`enum class ${name} {\n`, +1)
+        out(`enum class ${calf.name} {\n`, +1)
 
         for (const {name} of calf.values)
             out(`${name},\n`)
 
         out('}\n', -1)
     } else {
-        out(`enum class ${name} { }\n`)
+        out(`enum class ${calf.name} { }\n`)
     }
 }
 
 function nativeType(field) {
     const { base, dimensions } = field;
-    const resolvedType = typeof base === 'number' ? nativeTypes[base].kt : base.typeName
+    const resolvedType = typeof base === 'number' ? nativeTypes[base].kt : base.name
     const arrayPrefix = dimensions.map(() => "Array<").join("")
     const arraySuffix = dimensions.map(() => ">").join("")
 
@@ -182,15 +182,15 @@ function outField(field, name, dimension = field.dimensions?.length) {
     }
 }
 
-function outDataType(calf, name, superName, superVars) {
+function outDataType(calf, superName, superVars) {
     out('\n')
 
     const isAbstract = calf.subtypes.length > 0
     if (isAbstract) {
         if (superName)
-            out(`sealed interface ${name}: ${superName} {`, +1)
+            out(`sealed interface ${calf.name}: ${superName} {`, +1)
         else
-            out(`sealed interface ${name} {`, +1)
+            out(`sealed interface ${calf.name} {`, +1)
 
         if (!isEmpty(calf.variables)) out('\n')
 
@@ -202,13 +202,12 @@ function outDataType(calf, name, superName, superVars) {
         for (const subtype of calf.subtypes) {
             outDataType(
                 subtype,
-                subtype.name,
-                name,
+                calf.name,
                 { ...calf.variables, ...superVars },
             )
         }
     } else {
-        out(`class ${name} (`, +1)
+        out(`class ${calf.name} (`, +1)
 
         if (!isEmpty(superVars) || !isEmpty(calf.variables)) out('\n')
 
@@ -227,7 +226,9 @@ function outDataType(calf, name, superName, superVars) {
         else
             out(')', -1)
 
-        out (' {\n', +1)
+        out(' {\n', +1)
+
+        out(`override val leafIndex: UByte = ${calf.leafIndex}u\n\n`)
     }
 
     out(`override fun serializeHeader(packet: kotlinx.io.Buffer) {\n`, +1)
@@ -243,23 +244,23 @@ function outDataType(calf, name, superName, superVars) {
         }
     }
 
-    if (calf.index != null)
-        out(`packet.writeUByte(${calf.index}u)\n`)
+    if (calf.leafTypes?.length > 1)
+        out(`packet.writeUByte(leafIndex)\n`)
 
     out('}\n', -1)
 
     out(`override fun serializeBody(packet: kotlinx.io.Buffer) {\n`, +1)
+
+    out(`super.serializeBody(packet)\n`)
 
     for (const varName in calf.variables) {
         const field = calf.variables[varName];
         outField(field, varName)
     }
 
-    out (`super.serializeBody(packet)\n`)
+    out('}\n', -1)
 
-    out ('}\n', -1)
-
-    out ('}\n', -1)
+    out('}\n', -1)
 }
 
 out(`
@@ -276,9 +277,9 @@ for (const calfName in buffalo) {
     const calf = buffalo[calfName]
 
     if (calf.type === "enum") {
-        outEnumValues(calf, calfName)
+        outEnumValues(calf)
     } else if (calf.type === "data") {
-        outDataType(calf, calfName, "gr.elaevents.buffalo.schema.BuffaloType", {})
+        outDataType(calf, "gr.elaevents.buffalo.schema.BuffaloType", {})
     } else {
         throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
     }

@@ -17,15 +17,15 @@ const { schemaTypeIndices} = require('./buffaloTypes')
  * @param {number|undefined} dimension
  * @returns 
  */
-function writeProperty(field, value, packet, dimension = field.dimensions?.length) {
+function writeField(field, value, packet, dimension = field.dimensions?.length) {
     if (typeof field !== 'object') return; // Is constant
 
     if (dimension > 0) {
         const dimensionField = field.dimensions[dimension - 1]
-        writeProperty(dimensionField, value.length, packet);
+        writeField(dimensionField, value.length, packet);
         
         for (const item of value)
-            writeProperty(field, item, packet, dimension - 1)
+            writeField(field, item, packet, dimension - 1)
 
         return
     }
@@ -82,11 +82,11 @@ function writeProperty(field, value, packet, dimension = field.dimensions?.lengt
         case schemaTypeIndices.UIntArray:
         case schemaTypeIndices.ULongArray:
         case schemaTypeIndices.BooleanArray:
-            writeProperty(field.size, value.length, packet)
+            writeField(field.size, value.length, packet)
             packet.writeBuffer(Buffer.from(value))
             break;
         case schemaTypeIndices.Buffer:
-            writeProperty(field.size, value.size, packet)
+            writeField(field.size, value.size, packet)
             packet.writeBuffer(value)
             break;
         default:
@@ -97,37 +97,69 @@ function writeProperty(field, value, packet, dimension = field.dimensions?.lengt
         if (calf.type === "enum")
             packet.writeUInt8(value.index)
         else
-            writeProperties(calf, value, packet)
+            writeCalf(calf, value, packet)
     } else {
         // Invalid type
         throw new Error('Invalid field base type format')
     }
 }
 
-function writeProperties(calf, object, packet) {
-    // console.log("Writing", calf.typeName ?? calf.name)
-
-    for (const constName in calf.constants) {
-        const field = calf.constants[constName]
+function writeOwnConstants(type, packet) {
+    for (const constName in type.constants) {
+        const field = type.constants[constName]
         if (typeof field === 'number') {
             packet.writeUInt8(field) // Writing the field and not the value on purpose
         } else {
             throw new Error('Invalid constant type')
         }
     }
+}
 
-    const subtypeKey = calf.subtypeKey
-    if (subtypeKey != null) {
-        // console.log("Writing subtype key")
+function writeSubtypeConstants(type, object, packet) {
+    const subtypeKey = type.subtypeKey
+    if (subtypeKey != null)
+        writeTypeConstants(object[subtypeKey], object, packet)
+}
 
-        const subtype = object[subtypeKey]
-        packet.writeUInt8(subtype.index)
-        writeProperties(subtype, object, packet)
+function writeTypeConstants(type, object, packet) {
+    writeOwnConstants(type, packet)
+    writeSubtypeConstants(type, object, packet)
+}
+
+function writeOwnVariables(type, object, packet) {
+    for (const varName in type.variables) {
+        const field = type.variables[varName]
+        writeField(field, object[varName], packet)
+    }
+}
+
+function writeSubtypeVariables(type, object, packet) {
+    const subtypeKey = type.subtypeKey
+    if (subtypeKey != null)
+        return writeTypeVariables(object[subtypeKey], object, packet)
+
+    return type.leafIndex
+}
+
+function writeTypeVariables(type, object, packet) {
+    writeOwnVariables(type, object, packet)
+    return writeSubtypeVariables(type, object, packet)
+}
+
+function writeCalf(calf, object, packet) {
+    writeOwnConstants(calf, packet)
+
+    const leafTypeIndexOffset = packet.writeOffset
+    const writeLeafTypeIndex = calf.leafTypes.length > 1
+    if (writeLeafTypeIndex) {
+        packet.writeUInt8(0) //Will get replaced
     }
 
-    for (const varName in calf.variables) {
-        const field = calf.variables[varName]
-        writeProperty(field, object[varName], packet)
+    writeSubtypeConstants(calf, object, packet)
+
+    const leafTypeIndex = writeTypeVariables(calf, object, packet)
+    if (writeLeafTypeIndex) {
+        packet.writeUInt8(leafTypeIndex, leafTypeIndexOffset)
     }
 }
 
@@ -137,10 +169,10 @@ function writeProperties(calf, object, packet) {
  * @param {T["_objectType"]} object
  * @returns {Buffer}
  */
-function serializeBuffalo(calf, object) {
+function serializeCalf(calf, object) {
     const packet = new SmartBuffer()
-    writeProperties(calf, object, packet)
+    writeCalf(calf, object, packet)
     return packet.toBuffer()
 }
 
-module.exports = serializeBuffalo
+module.exports = serializeCalf

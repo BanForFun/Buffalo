@@ -8,16 +8,16 @@ const {schemaTypeIndices} = require("./buffaloTypes");
  * @param {number|undefined} dimension
  * @returns {any}
  */
-function readProperty(field, packet, dimension = field.dimensions?.length) {
+function readField(field, packet, dimension = field.dimensions?.length) {
     if (typeof field !== 'object') return field; // Constant
 
     if (dimension > 0) {
         const dimensionField = field.dimensions[dimension - 1]
-        const length = readProperty(dimensionField, packet);
+        const length = readField(dimensionField, packet);
 
         const array = [];
         for (let i = 0; i < length; i++) {
-            array.push(readProperty(field, packet, dimension - 1))
+            array.push(readField(field, packet, dimension - 1))
         }
 
         return array
@@ -52,39 +52,39 @@ function readProperty(field, packet, dimension = field.dimensions?.length) {
                 return packet.readBigUInt64LE()
             case schemaTypeIndices.IntArray:
                 return new Int32Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Int32Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Int32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ShortArray:
                 return new Int16Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Int16Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Int16Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ByteArray:
                 return new Int8Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Int8Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Int8Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.LongArray:
                 return new BigInt64Array(packet.readBuffer(
-                    readProperty(field.size, packet) * BigInt64Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * BigInt64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.FloatArray:
                 return new Float32Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Float32Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Float32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.DoubleArray:
                 return new Float64Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Float64Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Float64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UByteArray:
                 return new Uint8Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Uint8Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Uint8Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UShortArray:
                 return new Uint16Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Uint16Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Uint16Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.UIntArray:
                 return new Uint32Array(packet.readBuffer(
-                    readProperty(field.size, packet) * Uint32Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Uint32Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.ULongArray:
                 return new BigUint64Array(packet.readBuffer(
-                    readProperty(field.size, packet) * BigUint64Array.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * BigUint64Array.BYTES_PER_ELEMENT))
             case schemaTypeIndices.BooleanArray:
                 return new Uint8ClampedArray(packet.readBuffer(
-                    readProperty(field.size, packet) * Uint8ClampedArray.BYTES_PER_ELEMENT))
+                    readField(field.size, packet) * Uint8ClampedArray.BYTES_PER_ELEMENT))
             case schemaTypeIndices.Buffer:
-                return packet.readBuffer(readProperty(field.size, packet))
+                return packet.readBuffer(readField(field.size, packet))
             default:
                 throw new Error(`Invalid built-in type with index ${field.base}`)
         }
@@ -94,7 +94,7 @@ function readProperty(field, packet, dimension = field.dimensions?.length) {
             return calf.values[packet.readUInt8()]
         else {
             const object = {}
-            readProperties(calf, object, packet)
+            readCalf(calf, object, packet)
             return object;
         }
     } else {
@@ -103,9 +103,9 @@ function readProperty(field, packet, dimension = field.dimensions?.length) {
     }
 }
 
-function readProperties(calf, object, packet) {
-    for (const constName in calf.constants) {
-        const field = calf.constants[constName];
+function validateOwnConstants(type, packet) {
+    for (const constName in type.constants) {
+        const field = type.constants[constName];
         if (typeof field === 'number') {
             if (packet.readUInt8() !== field)
                 throw new Error(`Packet was not encoded with the same schema version`)
@@ -113,18 +113,29 @@ function readProperties(calf, object, packet) {
             throw new Error('Invalid constant type')
         }
     }
+}
 
-    const subtypeKey = calf.subtypeKey
-    if (subtypeKey != null) {
-        const typeIndex = packet.readUInt8()
-        const subtype = calf.subtypes[typeIndex];
-        object[subtypeKey] = subtype
-        readProperties(subtype, object, packet, )
+function readOwnVariables(type, object, packet) {
+    for (const varName in type.variables) {
+        const field = type.variables[varName];
+        object[varName] = readField(field, packet);
+    }
+}
+
+function readCalf(calf, object, packet) {
+    validateOwnConstants(calf, packet)
+
+    const hasLeafTypeIndex = calf.leafTypes.length > 1
+    const leafTypeIndex = hasLeafTypeIndex ? packet.readUInt8() : 0
+    const subtypePath = calf.leafTypes[leafTypeIndex]
+
+    for (let i = 0; i < subtypePath.length; i++) {
+        validateOwnConstants(subtypePath[i], packet)
     }
 
-    for (const varName in calf.variables) {
-        const field = calf.variables[varName];
-        object[varName] = readProperty(field, packet);
+    readOwnVariables(calf, object, packet)
+    for (let i = 0; i < subtypePath.length; i++) {
+        readOwnVariables(subtypePath[i], object, packet)
     }
 }
 
@@ -134,10 +145,10 @@ function readProperties(calf, object, packet) {
  * @param {Buffer} buffer
  * @returns {T["_objectType"]}
  */
-function deserializeBuffalo(calf, buffer) {
+function deserializeCalf(calf, buffer) {
     const object = {}
-    readProperties(calf, object, SmartBuffer.fromBuffer(buffer))
+    readCalf(calf, object, SmartBuffer.fromBuffer(buffer))
     return object
 }
 
-module.exports = deserializeBuffalo
+module.exports = deserializeCalf

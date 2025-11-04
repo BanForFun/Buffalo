@@ -10,4 +10,6 @@ interface BuffaloType {
     fun serializeBody(packet: Buffer) {
 
     }
+
+    val leafIndex: UByte
 }

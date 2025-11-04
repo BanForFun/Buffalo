@@ -24,14 +24,14 @@ function resolveType(buffalo, typeString, path) {
     return resolved
 }
 
-function parseType(buffalo, typeString, path) {
+function parseType(buffalo, typeString, fieldPath) {
     if (sizePattern.test(typeString)) return +(typeString)
 
     const baseType = baseTypePattern.exec(typeString)?.[0]
-    if (baseType == null) throw new Error(`Expected type at '${path}'.`)
+    if (baseType == null) throw new Error(`Expected type at '${fieldPath}'.`)
 
     const type = {
-        base: resolveType(buffalo, baseType, path),
+        base: resolveType(buffalo, baseType, fieldPath),
         dimensions: [],
         size: null
     }
@@ -39,66 +39,74 @@ function parseType(buffalo, typeString, path) {
     parameterPattern.lastIndex = baseType.length
     const sizeParameter = parameterPattern.exec(typeString)?.[1]
     if (sizeParameter != null) {
-        type.size = parseType(buffalo, sizeParameter, path)
+        type.size = parseType(buffalo, sizeParameter, fieldPath)
         dimensionPattern.lastIndex = parameterPattern.lastIndex
     } else {
         dimensionPattern.lastIndex = baseType.length
     }
 
     type.dimensions = Array.from(typeString.matchAll(dimensionPattern))
-        .map(match => parseType(buffalo, match[1], path))
+        .map(match => parseType(buffalo, match[1], fieldPath))
 
     return type
 }
 
-function linkDataDefinition(buffalo, calf, path, fieldScope = {}) {
+function linkDataDefinition(buffalo, leafTypes, type, path, fieldScope = {}, ) {
+    const fullPath = [...path, type]
+
     const subtypes = []
     const variables = {}
     const constants = {}
 
-    for (const childName in calf) {
-        const child = calf[childName]
+    for (const memberName in type) {
+        const child = type[memberName]
         if (typeof child === 'object') {
-            linkDataDefinition(buffalo, child, `${path}.${childName}`, {...fieldScope})
+            linkDataDefinition(buffalo, leafTypes, child, fullPath, {...fieldScope})
 
-            child.name = childName
-            child.index = subtypes.length
+            child.name = memberName
             child[util.inspect.custom] = function() {
-                return `<${path}.${this.name}>`
+                return `<BuffaloSubtype ${this.name}>`
             }
 
+            // child.index = subtypes.length
             subtypes.push(child)
         } else {
-            if (childName in fieldScope) {
-                throw new Error(`Multiple definitions for field '${childName}' in '${path}' (first defined in '${fieldScope[childName]}').`)
+            if (memberName in fieldScope) {
+                throw new Error(`Multiple definitions for field '${memberName}' in '${fullPath}' (first defined in '${fieldScope[memberName]}').`)
             } else {
-                fieldScope[childName] = path
+                fieldScope[memberName] = fullPath
             }
 
             if (child === typeType) {
-                if (calf.subtypeKey != null)
-                    throw new Error(`Duplicate type field '${childName}' in '${path}' (conflicting with '${calf.subtypeKey}')`)
+                if (type.subtypeKey != null)
+                    throw new Error(`Duplicate type field '${memberName}' in '${fullPath}' (conflicting with '${type.subtypeKey}')`)
 
-                calf.subtypeKey = childName
+                type.subtypeKey = memberName
             } else {
-                const fieldType = parseType(buffalo, child, path)
+                const fieldType = parseType(buffalo, child, fullPath)
                 if (typeof fieldType === 'object')
-                    variables[childName] = fieldType
+                    variables[memberName] = fieldType
                 else
-                    constants[childName] = fieldType
+                    constants[memberName] = fieldType
             }
 
-            delete calf[childName]
+            delete type[memberName]
         }
     }
 
     const isAbstract = subtypes.length > 0
-    if (isAbstract && calf.subtypeKey == null)
+    if (isAbstract && type.subtypeKey == null)
         throw new Error(`No type field defined for abstract type '${path}'`)
 
-    calf.subtypes = subtypes;
-    calf.variables = variables;
-    calf.constants = constants;
+    if (!isAbstract) {
+        type.leafIndex = leafTypes.length
+        fullPath.shift() //Remove root from start
+        leafTypes.push(fullPath)
+    }
+
+    type.subtypes = subtypes;
+    type.variables = variables;
+    type.constants = constants;
 }
 
 function parseEnum(calf, enumName) {
@@ -112,14 +120,14 @@ function parseEnum(calf, enumName) {
             index: i,
             name: name,
             [util.inspect.custom]() {
-                return `<${enumName}.${this.name}>`
+                return `<BuffaloEnum ${this.name}>`
             }
         }
     }
 
     parsed.values = calf.map((name) => parsed[name])
     parsed.type = "enum"
-    parsed.typeName = enumName
+    parsed.name = enumName
 
     return Object.freeze(parsed);
 }
@@ -137,9 +145,11 @@ function readBuffalo(path) {
         if (Array.isArray(calf)) {
             buffalo[calfName] = parseEnum(calf, calfName)
         } else {
-            linkDataDefinition(buffalo, calf, [calfName])
+            const leafTypes = []
+            linkDataDefinition(buffalo, leafTypes, calf, [])
             calf.type = "data"
-            calf.typeName = calfName
+            calf.name = calfName
+            calf.leafTypes = leafTypes
         }
     }
 
