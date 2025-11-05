@@ -3,8 +3,8 @@ const path = require('node:path')
 const readBuffalo = require('../buffaloReader')
 const { nativeTypes } = require('../buffaloTypes')
 const Printer = require('./models/Printer')
-const { isEmpty } = require('./utils/objectUtils')
 const {getOutputStream} = require("./utils/fileUtils");
+const {isTypeAbstract, isTypeRoot} = require("./utils/calfUtils");
 
 if (process.argv.length < 3 || process.argv.length > 4) {
     console.error("Usage: node generateTypescriptTypes.js BUFFALO_FILE [OUTPUT_FILE_OR_DIRECTORY]")
@@ -16,115 +16,112 @@ const buffalo = readBuffalo(inputPath)
 const objectName = path.basename(inputPath, ".yaml")
 
 const outputStream = getOutputStream(process.argv[3], objectName + ".d.ts")
-const { out } = new Printer(outputStream)
+const printer = new Printer(outputStream)
+
+printer.line(`type ValueOf<T extends object> = T[keyof T]`)
+
+function printDataTypeInterface(type) {
+    if (isTypeAbstract(type) || isTypeRoot(type)) {
+        printer.blockStart(`readonly ${type.name} : {`)
+
+        if (isTypeRoot(type))
+            printer.line(`readonly _objectType: ${type.name}`)
+
+        for (const subtype of type.subtypes) {
+            printDataTypeInterface(subtype)
+        } 
+
+        printer.blockEnd('}')
+    } else {
+        printer.line(`readonly ${type.name}: unique symbol`)
+    }
+}
+
+function printEnumTypeInterface(calf) {
+    if (calf.values.length > 0) {
+        printer.blockStart(`readonly ${calf.name} : {`)
+
+        for (const {name} of calf.values)
+            printer.line(`readonly ${name}: unique symbol`)
+
+        printer.blockEnd('}')
+    } else {
+        printer.line(`readonly ${calf.name}: unique symbol`)
+    }
+}
+
+printer.blockStart(`export type ${objectName} = {`)
+
+for (const calfName in buffalo) {
+    const calf = buffalo[calfName]
+
+    if (calf.type === "enum") {
+        printEnumTypeInterface(calf)
+    } else if (calf.type === "data") {
+        printDataTypeInterface(calf)
+    } else {
+        throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
+    }
+}
+
+printer.blockEnd('}')
+
+
 
 function typeOf(...path) {
     return `${objectName}${path.map(p => `["${p}"]`).join("")}`
 }
 
-out(`type ValueOf<T extends object> = T[keyof T]\n\n`)
-
-function outConstType(calf, name) {
-    const isRoot = calf.type != null
-
-    if (!isEmpty(calf.subtypes) || isRoot) {
-        out(`readonly ${name} : {\n`, +1)
-
-        if (isRoot)
-            out(`readonly _objectType: ${name}\n`)
-
-        for (const subtype of calf.subtypes) {
-            outConstType(subtype, subtype.name)
-        } 
-
-        out('}\n', -1)
-    } else {
-        out(`readonly ${name}: unique symbol\n`)
-    }
-}
-
-function outEnumValues(calf, name) {
-    if (calf.values.length > 0) {
-        out(`readonly ${name} : {\n`, +1)
-
-        for (const {name} of calf.values)
-            out(`readonly ${name}: unique symbol\n`)
-
-        out('}\n', -1)
-    } else {
-        out(`readonly ${name}: unique symbol\n`)
-    }
-}
-
-out(`export type ${objectName} = {\n`, +1)
-for (const calfName in buffalo) {
-    const calf = buffalo[calfName]
-
-    if (calf.type === "enum") {
-        outEnumValues(calf, calfName)
-    } else if (calf.type === "data") {
-        outConstType(calf, calfName)
-    } else {
-        throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
-    }
-}
-out('}\n\n', -1)
-
-function resolveFieldType(field) {
+function nativeType(field) {
     const { base, dimensions } = field;
-    const resolvedType = typeof base === 'number' ? nativeTypes[base].ts : base.typeName
-    const arrayNotation = dimensions.map(() => "[]").join("")
+    const resolvedType = typeof base === 'number' ? nativeTypes[base].ts : base.name
+    const arraySuffix = dimensions.map(() => "[]").join("")
 
-    return resolvedType + arrayNotation
+    return resolvedType + arraySuffix
 }
 
-function outDataType(calf, path, subtypeKey) {
-    const hasFields = !isEmpty(calf.variables) || !isEmpty(calf.constants) || subtypeKey != null
-    if (hasFields) {
-        out('{\n', +1)
+function printDataTypeObject(type, path, subtypeKey) {
+    if (subtypeKey != null)
+        printer.line(`${subtypeKey}: ${typeOf(...path)},`)
 
-        if (subtypeKey != null)
-            out(`${subtypeKey}: ${typeOf(...path)},\n`)
-
-        for (const varName in calf.variables) {
-            const field = calf.variables[varName];
-            out(`${varName}: ${resolveFieldType(field)},\n`)
-        }
-
-        for (const constName in calf.constants) {
-            out(`${constName}?: never,\n`)
-        }
-
-        out('}', -1)
+    for (const varName in type.variables) {
+        const field = type.variables[varName];
+        printer.line(`${varName}: ${nativeType(field)},`)
     }
 
-    const isAbstract = calf.subtypes.length > 0
-    if (isAbstract && hasFields)
-        out(" & (\n", +1)
-    
-    for (let i = 0; i < calf.subtypes.length; i++) {
-        const subtype = calf.subtypes[i]
-        outDataType(subtype, path.concat(subtype.name), calf.subtypeKey)
-
-        if (i < calf.subtypes.length - 1)
-            out(" | ")
-        else
-            out("\n")
+    for (const constName in type.constants) {
+        printer.line(`${constName}?: never,`)
     }
 
-    if (isAbstract && hasFields)
-        out(')', -1)
+    if (!isTypeAbstract(type)) return false;
+
+    printer.blockEndStart('} & (')
+
+    for (let i = 0; i < type.subtypes.length; i++) {
+        if (i === 0) printer.blockStart('{')
+
+        const subtype = type.subtypes[i]
+        const isAbstract = printDataTypeObject(subtype, path.concat(subtype.name), type.subtypeKey)
+
+        if (i < type.subtypes.length - 1) {
+            printer.blockEndStart(isAbstract ? ') | {' : '} | {')
+        } else {
+            printer.blockEnd(isAbstract ? ')' : '}')
+        }
+    }
+
+    return true;
 }
 
 for (const calfName in buffalo) {
     const calf = buffalo[calfName]
 
     if (calf.type === "enum") {
-        out(`export type ${calfName} = ValueOf<${typeOf(calfName)}>\n\n`)
+        printer.line(`export type ${calfName} = ValueOf<${typeOf(calfName)}>\n\n`)
     } else if (calf.type === "data") {
-        out(`export type ${calfName} = `)
-        outDataType(calf, [calfName], null)
-        out("\n\n")
+        printer.blockStart(`type ${calfName} = {`)
+        const isAbstract = printDataTypeObject(calf, [calfName], null)
+        printer.blockEnd(isAbstract ? ')' : '}')
     } else {
         throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
     }
