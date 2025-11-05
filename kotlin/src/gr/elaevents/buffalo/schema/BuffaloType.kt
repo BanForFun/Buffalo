@@ -6,13 +6,17 @@ abstract class BuffaloType {
     @Suppress("PropertyName")
     protected abstract val _leafIndex: UByte
 
-    internal abstract fun serializeHeader(packet: Buffer)
-    internal abstract fun serializeBody(packet: Buffer)
+    protected abstract fun serializeHeader(packet: Buffer)
+    protected abstract fun serializeBody(packet: Buffer)
+
+    internal fun serialize(packet: Buffer) {
+        serializeHeader(packet)
+        serializeBody(packet)
+    }
 
     fun serialize(): Buffer {
         val packet = Buffer()
-        serializeHeader(packet)
-        serializeBody(packet)
+        serialize(packet)
         return packet
     }
 

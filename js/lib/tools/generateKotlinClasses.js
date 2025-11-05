@@ -169,10 +169,9 @@ function printWriteField(field, name, dimension = field.dimensions?.length) {
         const calf = field.base
         if (calf.type === "enum")
             printer.line(`packet.writeUByte(${name}.ordinal.toUByte())`)
-        else if (calf.type === "data") {
-            printer.line(`${name}.serializeHeader(packet)`)
-            printer.line(`${name}.serializeBody(packet)`)
-        } else
+        else if (calf.type === "data")
+            printer.line(`${name}.serialize(packet)`)
+        else
             throw new Error('Invalid type')
     } else {
         // Invalid type
@@ -283,9 +282,9 @@ function readField(field, dimension = field.dimensions?.length) {
         const calf = field.base
         if (calf.type === "enum")
             return `${calf.name}.entries[packet.readUByte().toInt()]`
-        else if (calf.type === "data") {
+        else if (calf.type === "data")
             return `${calf.name}.deserialize(packet)`
-        } else
+        else
             throw new Error('Invalid type')
     } else {
         // Invalid type
@@ -300,7 +299,7 @@ function printDataType(
     depth = 0
 ) {
     const isAbstract = calf.subtypes.length > 0
-    const isRootType = depth === 0
+    const protectedModifier = isAbstract ? "protected" : "private"
 
     printer.blockStart(`${isAbstract ? "sealed ": ""}class ${calf.name}: ${superClass} {`)
 
@@ -331,7 +330,7 @@ function printDataType(
     printer.blockEnd('}')
 
 
-    printer.blockStart(`${isAbstract ? "protected": "private"} constructor(packet: kotlinx.io.Buffer): super(${isRootType ? "" : "packet"}) {`)
+    printer.blockStart(`${protectedModifier} constructor(packet: kotlinx.io.Buffer): super(${depth > 0 ? "packet" : ""}) {`)
 
     for (const varName in calf.variables)
         printer.line(`this.${varName} = ${readField(calf.variables[varName])}`)
@@ -339,14 +338,16 @@ function printDataType(
     printer.blockEnd('}')
 
 
-    if (isRootType) {
+    if (depth === 0) {
         printer.blockStart(`companion object Deserializer: gr.elaevents.buffalo.schema.BuffaloDeserializer<${calf.name}>() {`)
-        printer.blockStart(`override fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
 
+        printer.blockStart(`private fun validateHeader(packet: kotlinx.io.Buffer) {`)
         printValidateConstants(calf)
+        printer.blockEnd('}')
 
-        const hasLeafTypeIndex = calf.leafTypes.length > 1
-        if (!hasLeafTypeIndex) {
+        printer.blockStart(`override fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
+        printer.line(`validateHeader(packet)`)
+        if (calf.leafTypes.length === 1) {
             const leafTypePath = calf.leafTypes[0]
             const leafTypeClass = leafTypePath.length > 0 ? leafTypePath.map(t => t.name).join('.') : calf.name
             printer.line(`return ${leafTypeClass}(packet)`)
@@ -360,32 +361,28 @@ function printDataType(
 
             printer.blockEnd('}')
         }
-
         printer.blockEnd('}')
-        printer.blockEnd('}')
-    } else if (isAbstract) {
-        printer.blockStart(`internal companion object Deserializer {`)
-        printer.blockStart(`internal fun validateSubtypeConstants(packet: kotlinx.io.Buffer) {`)
 
-        if (depth > 1)
-            printer.line(`${superClass}.validateSubtypeConstants(packet)`)
-
-        printValidateConstants(calf)
-
-        printer.blockEnd('}')
         printer.blockEnd('}')
     } else {
         printer.blockStart(`internal companion object Deserializer {`)
-        printer.blockStart(`internal fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
 
-        if (depth > 1)
-            printer.line(`validateSubtypeConstants(packet)`)
+        printer.blockStart(`${protectedModifier} fun validateHeader(packet: kotlinx.io.Buffer) {`)
 
+        if (depth > 1) printer.line(`${superClass}.validateHeader(packet)`)
         printValidateConstants(calf)
 
-        printer.line(`return ${calf.name}(packet)`)
-
         printer.blockEnd('}')
+
+        if (!isAbstract) {
+            printer.blockStart(`fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
+
+            printer.line(`validateHeader(packet)`)
+            printer.line(`return ${calf.name}(packet)`)
+
+            printer.blockEnd('}')
+        }
+
         printer.blockEnd('}')
     }
 
@@ -395,7 +392,7 @@ function printDataType(
     if (hasConstants || hasSubtypeIndex) {
         printer.blockStart(`override fun serializeHeader(packet: kotlinx.io.Buffer) {`)
 
-        if (!isRootType)
+        if (depth > 0)
             printer.line(`super.serializeHeader(packet)`)
 
         for (const constName in calf.constants) {
@@ -418,7 +415,7 @@ function printDataType(
     if (hasVariables) {
         printer.blockStart(`override fun serializeBody(packet: kotlinx.io.Buffer) {`)
 
-        if (!isRootType)
+        if (depth > 0)
             printer.line(`super.serializeBody(packet)`)
 
         for (const varName in calf.variables) {
