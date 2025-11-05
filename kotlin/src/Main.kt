@@ -1,7 +1,4 @@
-import gr.elaevents.buffalo.serializeBuffalo
-import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import kotlin.system.measureTimeMillis
 import kotlin.time.measureTime
 
 fun main() {
@@ -16,15 +13,18 @@ fun main() {
         )
     )
 
-    repeat(10_000) { serializeBuffalo(token) }
+    repeat(10_000) { token.serialize() }
 
     val time = measureTime {
-        repeat(1_000) { serializeBuffalo(token) }
+        repeat(1_000) { token.serialize() }
     }
 
     println("Took ${time / 1_000}")
 
-    val bytes = serializeBuffalo(token).readByteArray()
+    val bytes = token.serialize().readByteArray()
     println(bytes.joinToString(" ") { "%02X".format(it) })
     println("Serialized ${bytes.size} bytes")
+
+    val deserialized = Token.deserialize(token.serialize())
+
 }

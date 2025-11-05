@@ -15,165 +15,163 @@ const buffalo = readBuffalo(inputPath)
 const objectName = path.basename(inputPath, ".yaml")
 
 const outputStream = getOutputStream(process.argv[3], objectName + ".kt")
-const { out } = new Printer(outputStream)
+const printer = new Printer(outputStream)
 
-function outEnumValues(calf) {
-    out('\n')
-    if (calf.values.length > 0) {
-        out(`enum class ${calf.name} {\n`, +1)
-
-        for (const {name} of calf.values)
-            out(`${name},\n`)
-
-        out('}\n', -1)
-    } else {
-        out(`enum class ${calf.name} { }\n`)
-    }
+function repeatString(string, times) {
+    return Array(times).fill(string).join("")
 }
 
-function nativeType(field) {
-    const { base, dimensions } = field;
+function outEnumValues(calf) {
+    printer.blockStart(`enum class ${calf.name} {`)
+
+    for (const {name} of calf.values)
+        printer.line(`${name},`)
+
+    printer.blockEnd('}')
+}
+
+function nativeType(field, dimensions = field.dimensions.length) {
+    const { base } = field;
     const resolvedType = typeof base === 'number' ? nativeTypes[base].kt : base.name
-    const arrayPrefix = dimensions.map(() => "Array<").join("")
-    const arraySuffix = dimensions.map(() => ">").join("")
+
+    const arrayPrefix = repeatString("Array<", dimensions)
+    const arraySuffix = repeatString( ">", dimensions)
 
     return arrayPrefix + resolvedType + arraySuffix
 }
 
-function outPrimitive(typeIndex, name) {
+function printWritePrimitive(typeIndex, name) {
     switch (typeIndex) {
         case schemaTypeIndices.String:
-            out(`packet.writeStringNt(${name})\n`)
+            printer.line(`packet.writeStringNt(${name})`)
             break;
         case schemaTypeIndices.Boolean:
-            out(`packet.writeUByte(if (${name}) 1u else 0u)\n`)
+            printer.line(`packet.writeUByte(if (${name}) 1u else 0u)`)
             break;
         case schemaTypeIndices.Byte:
-            out(`packet.writeByte(${name})\n`)
+            printer.line(`packet.writeByte(${name})`)
             break;
         case schemaTypeIndices.Short:
-            out(`packet.writeShortLe(${name})\n`)
+            printer.line(`packet.writeShortLe(${name})`)
             break;
         case schemaTypeIndices.Int:
-            out(`packet.writeIntLe(${name})\n`)
+            printer.line(`packet.writeIntLe(${name})`)
             break;
         case schemaTypeIndices.Long:
-            out(`packet.writeLongLe(${name})\n`)
+            printer.line(`packet.writeLongLe(${name})`)
             break;
         case schemaTypeIndices.Float:
-            out(`packet.writeFloatLe(${name})\n`)
+            printer.line(`packet.writeFloatLe(${name})`)
             break;
         case schemaTypeIndices.Double:
-            out(`packet.writeDoubleLe(${name})\n`)
+            printer.line(`packet.writeDoubleLe(${name})`)
             break;
         case schemaTypeIndices.UByte:
-            out(`packet.writeUByte(${name})\n`)
+            printer.line(`packet.writeUByte(${name})`)
             break;
         case schemaTypeIndices.UShort:
-            out(`packet.writeUShortLe(${name})\n`)
+            printer.line(`packet.writeUShortLe(${name})`)
             break;
         case schemaTypeIndices.UInt:
-            out(`packet.writeUIntLe(${name})\n`)
+            printer.line(`packet.writeUIntLe(${name})`)
             break;
         case schemaTypeIndices.ULong:
-            out(`packet.writeULongLe(${name})\n`)
+            printer.line(`packet.writeULongLe(${name})`)
             break;
         default:
             throw new Error(`Invalid primitive type with index ${typeIndex}`)
     }
 }
 
-function outSize(field, name) {
+function printWriteSize(field, name) {
     if (typeof field !== "object") return
 
     switch (field.base) {
         case schemaTypeIndices.UByte:
-            out(`packet.writeUByte(${name}.toUByte())\n`)
+            printer.line(`packet.writeUByte(${name}.toUByte())`)
             break;
         case schemaTypeIndices.UShort:
-            out(`packet.writeUShortLe(${name}.toUShort())\n`)
+            printer.line(`packet.writeUShortLe(${name}.toUShort())`)
             break;
         case schemaTypeIndices.Int:
-            out(`packet.writeIntLe(${name})\n`)
+            printer.line(`packet.writeIntLe(${name})`)
             break;
         default:
             throw new Error(`Invalid size type with index ${field.base}`)
     }
 }
 
-function outArray(field, name, typeIndex) {
-    outSize(field.size, `${name}.size`)
-    const itemName = `${name}1`;
-    out(`for (${itemName} in ${name}) {\n`, +1)
-    outPrimitive(typeIndex, itemName)
-    out('}\n', -1)
+function printWriteArray(field, name, typeIndex) {
+    printWriteSize(field.size, `${name}.size`)
+    const itemName = `item0`;
+    printer.blockStart(`for (${itemName} in ${name}) {`)
+    printWritePrimitive(typeIndex, itemName)
+    printer.blockEnd('}')
 }
 
-function outField(field, name, dimension = field.dimensions?.length) {
+function printWriteField(field, name, dimension = field.dimensions?.length) {
     if (dimension > 0) {
         const dimensionField = field.dimensions[dimension - 1]
-        outSize(dimensionField, `${name}.size`)
+        printWriteSize(dimensionField, `${name}.size`)
 
-        const itemName = `${name}${dimension}`;
-        out(`for (${itemName} in ${name}) {\n`, +1)
-        outField(field, itemName, dimension - 1)
-        out('}\n', -1)
+        const itemName = `item${dimension}`;
+        printer.blockStart(`for (${itemName} in ${name}) {`)
+        printWriteField(field, itemName, dimension - 1)
+        printer.blockEnd('}')
 
         return
     }
 
     if (typeof field.base === 'number') {
-        // console.log("Writing field", schemaTypes[field.base], "at", packet.writeOffset)
-
         // Built-in type
         switch(field.base) {
             case schemaTypeIndices.IntArray:
-                outArray(field, name, schemaTypeIndices.Int)
+                printWriteArray(field, name, schemaTypeIndices.Int)
                 break;
             case schemaTypeIndices.ShortArray:
-                outArray(field, name, schemaTypeIndices.Short)
+                printWriteArray(field, name, schemaTypeIndices.Short)
                 break;
             case schemaTypeIndices.ByteArray:
-                outArray(field, name, schemaTypeIndices.Byte)
+                printWriteArray(field, name, schemaTypeIndices.Byte)
                 break;
             case schemaTypeIndices.LongArray:
-                outArray(field, name, schemaTypeIndices.Long)
+                printWriteArray(field, name, schemaTypeIndices.Long)
                 break;
             case schemaTypeIndices.FloatArray:
-                outArray(field, name, schemaTypeIndices.Float)
+                printWriteArray(field, name, schemaTypeIndices.Float)
                 break;
             case schemaTypeIndices.DoubleArray:
-                outArray(field, name, schemaTypeIndices.Double)
+                printWriteArray(field, name, schemaTypeIndices.Double)
                 break;
             case schemaTypeIndices.UByteArray:
-                outArray(field, name, schemaTypeIndices.UByte)
+                printWriteArray(field, name, schemaTypeIndices.UByte)
                 break;
             case schemaTypeIndices.UShortArray:
-                outArray(field, name, schemaTypeIndices.UShort)
+                printWriteArray(field, name, schemaTypeIndices.UShort)
                 break;
             case schemaTypeIndices.UIntArray:
-                outArray(field, name, schemaTypeIndices.UInt)
+                printWriteArray(field, name, schemaTypeIndices.UInt)
                 break;
             case schemaTypeIndices.ULongArray:
-                outArray(field, name, schemaTypeIndices.ULong)
+                printWriteArray(field, name, schemaTypeIndices.ULong)
                 break;
             case schemaTypeIndices.BooleanArray:
-                outArray(field, name, schemaTypeIndices.Boolean)
+                printWriteArray(field, name, schemaTypeIndices.Boolean)
                 break;
             case schemaTypeIndices.Buffer:
-                outSize(field.size, `${name}.size`)
-                out(`packet.write(${name})\n`)
+                printWriteSize(field.size, `${name}.size`)
+                printer.line(`packet.write(${name})`)
                 break;
             default:
-                outPrimitive(field.base, name)
+                printWritePrimitive(field.base, name)
         }
     } else if (typeof field.base === 'object') {
         const calf = field.base
         if (calf.type === "enum")
-            out(`packet.writeUByte(${name}.ordinal.toUByte())\n`)
+            printer.line(`packet.writeUByte(${name}.ordinal.toUByte())`)
         else if (calf.type === "data") {
-            out(`${name}.serializeHeader(packet)\n`)
-            out(`${name}.serializeBody(packet)\n`)
+            printer.line(`${name}.serializeHeader(packet)`)
+            printer.line(`${name}.serializeBody(packet)`)
         } else
             throw new Error('Invalid type')
     } else {
@@ -182,88 +180,268 @@ function outField(field, name, dimension = field.dimensions?.length) {
     }
 }
 
-function outDataType(calf, superName, superVars) {
-    out('\n')
+function printValidateConstants(calf) {
+    const values = Object.values(calf.constants)
+    if (values.length === 0) return;
 
-    const isAbstract = calf.subtypes.length > 0
-    if (isAbstract) {
-        if (superName)
-            out(`sealed interface ${calf.name}: ${superName} {`, +1)
-        else
-            out(`sealed interface ${calf.name} {`, +1)
-
-        if (!isEmpty(calf.variables)) out('\n')
-
-        for (const varName in calf.variables) {
-            const field = calf.variables[varName];
-            out(`val ${varName}: ${nativeType(field)}\n`)
-        }
-
-        for (const subtype of calf.subtypes) {
-            outDataType(
-                subtype,
-                calf.name,
-                { ...calf.variables, ...superVars },
-            )
-        }
-    } else {
-        out(`class ${calf.name} (`, +1)
-
-        if (!isEmpty(superVars) || !isEmpty(calf.variables)) out('\n')
-
-        for (const varName in calf.variables) {
-            const field = calf.variables[varName];
-            out(`val ${varName}: ${nativeType(field)},\n`)
-        }
-
-        for (const superVarName in superVars) {
-            const field = superVars[superVarName];
-            out(`override val ${superVarName}: ${nativeType(field)},\n`)
-        }
-
-        if (superName)
-            out(`): ${superName}`, -1)
-        else
-            out(')', -1)
-
-        out(' {\n', +1)
-
-        out(`override val leafIndex: UByte = ${calf.leafIndex}u\n\n`)
-    }
-
-    out(`override fun serializeHeader(packet: kotlinx.io.Buffer) {\n`, +1)
-
-    out (`super.serializeHeader(packet)\n`)
-
-    for (const constName in calf.constants) {
-        const field = calf.constants[constName];
-        if (typeof field === 'number') {
-            out(`packet.writeUByte(${field}u)\n`)
-        } else {
-            throw new Error('Invalid constant type')
-        }
-    }
-
-    if (calf.leafTypes?.length > 1)
-        out(`packet.writeUByte(leafIndex)\n`)
-
-    out('}\n', -1)
-
-    out(`override fun serializeBody(packet: kotlinx.io.Buffer) {\n`, +1)
-
-    out(`super.serializeBody(packet)\n`)
-
-    for (const varName in calf.variables) {
-        const field = calf.variables[varName];
-        outField(field, varName)
-    }
-
-    out('}\n', -1)
-
-    out('}\n', -1)
+    printer.blockStart(`if (`)
+    printer.lines(values.map(v => `packet.readUByte() != ${v}u.toUByte()`), "|| ")
+    printer.blockEnd(') throw IllegalStateException("Invalid packet header")')
 }
 
-out(`
+function readPrimitive(typeIndex) {
+    switch (typeIndex) {
+        case schemaTypeIndices.String:
+            return `packet.readStringNt()`
+        case schemaTypeIndices.Boolean:
+            return `packet.readUByte() > 0u`
+        case schemaTypeIndices.Byte:
+            return `packet.readByte()`
+        case schemaTypeIndices.Short:
+            return `packet.readShortLe()`
+        case schemaTypeIndices.Int:
+            return `packet.readIntLe()`
+        case schemaTypeIndices.Long:
+            return `packet.readLongLe()`
+        case schemaTypeIndices.Float:
+            return `packet.readFloatLe()`
+        case schemaTypeIndices.Double:
+            return `packet.readDoubleLe()`
+        case schemaTypeIndices.UByte:
+            return `packet.readUByte()`
+        case schemaTypeIndices.UShort:
+            return `packet.readUShortLe()`
+        case schemaTypeIndices.UInt:
+            return `packet.readUIntLe()`
+        case schemaTypeIndices.ULong:
+            return `packet.readULongLe()`
+        default:
+            throw new Error(`Invalid primitive type with index ${typeIndex}`)
+    }
+}
+
+function readSize(field) {
+    if (typeof field !== "object") return field
+
+    switch (field.base) {
+        case schemaTypeIndices.UByte:
+            return `packet.readUByte().toInt()`
+        case schemaTypeIndices.UShort:
+            return `packet.readUShortLe().toInt()`
+        case schemaTypeIndices.Int:
+            return `packet.readIntLe()`
+        default:
+            throw new Error(`Invalid size type with index ${field.base}`)
+    }
+}
+
+function readArray(field, typeIndex) {
+    const size = readSize(field.size)
+    return `${nativeTypes[field.base].kt}(${size}) { _ -> ${readPrimitive(typeIndex)} }`
+}
+
+function readField(field, dimension = field.dimensions?.length) {
+    if (dimension > 0) {
+        const sizeField = field.dimensions[dimension - 1]
+        const size = readSize(sizeField)
+
+        return `Array(${size}) { _ -> ${readField(field,dimension - 1)} }`
+    }
+
+    if (typeof field.base === 'number') {
+        // Built-in type
+        switch(field.base) {
+            case schemaTypeIndices.IntArray:
+                return readArray(field, schemaTypeIndices.Int)
+            case schemaTypeIndices.ShortArray:
+                return readArray(field, schemaTypeIndices.Short)
+            case schemaTypeIndices.ByteArray:
+                return readArray(field, schemaTypeIndices.Byte)
+            case schemaTypeIndices.LongArray:
+                return readArray(field, schemaTypeIndices.Long)
+            case schemaTypeIndices.FloatArray:
+                return readArray(field, schemaTypeIndices.Float)
+            case schemaTypeIndices.DoubleArray:
+                return readArray(field, schemaTypeIndices.Double)
+            case schemaTypeIndices.UByteArray:
+                return readArray(field, schemaTypeIndices.UByte)
+            case schemaTypeIndices.UShortArray:
+                return readArray(field, schemaTypeIndices.UShort)
+            case schemaTypeIndices.UIntArray:
+                return readArray(field, schemaTypeIndices.UInt)
+            case schemaTypeIndices.ULongArray:
+                return readArray(field, schemaTypeIndices.ULong)
+            case schemaTypeIndices.BooleanArray:
+                return readArray(field, schemaTypeIndices.Boolean)
+            case schemaTypeIndices.Buffer:
+                const size = readSize(field.size)
+                return `packet.readByteArray(${size})`
+            default:
+                return readPrimitive(field.base)
+        }
+    } else if (typeof field.base === 'object') {
+        const calf = field.base
+        if (calf.type === "enum")
+            return `${calf.name}.entries[packet.readUByte().toInt()]`
+        else if (calf.type === "data") {
+            return `${calf.name}.deserialize(packet)`
+        } else
+            throw new Error('Invalid type')
+    } else {
+        // Invalid type
+        throw new Error('Invalid field base type format')
+    }
+}
+
+function printDataType(
+    calf,
+    superClass = "gr.elaevents.buffalo.schema.BuffaloType",
+    superVars = {},
+    depth = 0
+) {
+    const isAbstract = calf.subtypes.length > 0
+    const isRootType = depth === 0
+
+    printer.blockStart(`${isAbstract ? "sealed ": ""}class ${calf.name}: ${superClass} {`)
+
+    if (calf.leafIndex != null)
+        printer.line(`override val _leafIndex: UByte = ${calf.leafIndex}u`)
+
+    for (const varName in calf.variables)
+        printer.line(`val ${varName}: ${nativeType(calf.variables[varName])}`)
+
+    printer.blockStart(`constructor(`)
+
+    for (const superVarName in superVars)
+        printer.line(`${superVarName}: ${nativeType(superVars[superVarName])},`)
+
+    for (const varName in calf.variables)
+        printer.line(`${varName}: ${nativeType(calf.variables[varName])},`)
+
+    printer.blockEndStart(`): super(`)
+
+    for (const superVarName in superVars)
+        printer.line(`${superVarName},`)
+
+    printer.blockEndStart(`) {`)
+
+    for (const varName in calf.variables)
+        printer.line(`this.${varName} = ${varName}`)
+
+    printer.blockEnd('}')
+
+
+    printer.blockStart(`${isAbstract ? "protected": "private"} constructor(packet: kotlinx.io.Buffer): super(${isRootType ? "" : "packet"}) {`)
+
+    for (const varName in calf.variables)
+        printer.line(`this.${varName} = ${readField(calf.variables[varName])}`)
+
+    printer.blockEnd('}')
+
+
+    if (isRootType) {
+        printer.blockStart(`companion object Deserializer: gr.elaevents.buffalo.schema.BuffaloDeserializer<${calf.name}>() {`)
+        printer.blockStart(`override fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
+
+        printValidateConstants(calf)
+
+        const hasLeafTypeIndex = calf.leafTypes.length > 1
+        if (!hasLeafTypeIndex) {
+            const leafTypePath = calf.leafTypes[0]
+            const leafTypeClass = leafTypePath.length > 0 ? leafTypePath.map(t => t.name).join('.') : calf.name
+            printer.line(`return ${leafTypeClass}(packet)`)
+        } else {
+            printer.blockStart(`return when(packet.readUByte().toInt()) {`)
+
+            for (let i = 0; i < calf.leafTypes.length; i++) {
+                printer.line(`${i} -> ${calf.leafTypes[i].map(t => t.name).join('.')}.deserialize(packet)`)
+            }
+            printer.line(`else -> throw IllegalStateException("Invalid subtype index")`)
+
+            printer.blockEnd('}')
+        }
+
+        printer.blockEnd('}')
+        printer.blockEnd('}')
+    } else if (isAbstract) {
+        printer.blockStart(`internal companion object Deserializer {`)
+        printer.blockStart(`internal fun validateSubtypeConstants(packet: kotlinx.io.Buffer) {`)
+
+        if (depth > 1)
+            printer.line(`${superClass}.validateSubtypeConstants(packet)`)
+
+        printValidateConstants(calf)
+
+        printer.blockEnd('}')
+        printer.blockEnd('}')
+    } else {
+        printer.blockStart(`internal companion object Deserializer {`)
+        printer.blockStart(`internal fun deserialize(packet: kotlinx.io.Buffer): ${calf.name} {`)
+
+        if (depth > 1)
+            printer.line(`validateSubtypeConstants(packet)`)
+
+        printValidateConstants(calf)
+
+        printer.line(`return ${calf.name}(packet)`)
+
+        printer.blockEnd('}')
+        printer.blockEnd('}')
+    }
+
+
+    const hasConstants = !isEmpty(calf.constants)
+    const hasSubtypeIndex = calf.leafTypes?.length > 1
+    if (hasConstants || hasSubtypeIndex) {
+        printer.blockStart(`override fun serializeHeader(packet: kotlinx.io.Buffer) {`)
+
+        if (!isRootType)
+            printer.line(`super.serializeHeader(packet)`)
+
+        for (const constName in calf.constants) {
+            const field = calf.constants[constName];
+            if (typeof field === 'number') {
+                printer.line(`packet.writeUByte(${field}u)`)
+            } else {
+                throw new Error('Invalid constant type')
+            }
+        }
+
+        if (hasSubtypeIndex)
+            printer.line(`packet.writeUByte(_leafIndex)`)
+
+        printer.blockEnd('}')
+    }
+
+
+    const hasVariables = !isEmpty(calf.variables)
+    if (hasVariables) {
+        printer.blockStart(`override fun serializeBody(packet: kotlinx.io.Buffer) {`)
+
+        if (!isRootType)
+            printer.line(`super.serializeBody(packet)`)
+
+        for (const varName in calf.variables) {
+            const field = calf.variables[varName];
+            printWriteField(field, `this.${varName}`)
+        }
+
+        printer.blockEnd('}')
+    }
+
+    for (const subtype of calf.subtypes) {
+        printDataType(
+            subtype,
+            calf.name,
+            { ...superVars, ...calf.variables },
+            depth + 1
+        )
+    }
+
+    printer.blockEnd('}')
+}
+
+printer.line(`
 import kotlinx.io.writeDoubleLe
 import kotlinx.io.writeFloatLe
 import kotlinx.io.writeUByte
@@ -271,6 +449,15 @@ import kotlinx.io.writeUIntLe
 import kotlinx.io.writeULongLe
 import kotlinx.io.writeUShortLe
 import gr.elaevents.buffalo.utils.writeStringNt
+
+import kotlinx.io.readDoubleLe
+import kotlinx.io.readFloatLe
+import kotlinx.io.readUByte
+import kotlinx.io.readUIntLe
+import kotlinx.io.readULongLe
+import kotlinx.io.readUShortLe
+import kotlinx.io.readByteArray
+import gr.elaevents.buffalo.utils.readStringNt
 `)
 
 for (const calfName in buffalo) {
@@ -279,7 +466,7 @@ for (const calfName in buffalo) {
     if (calf.type === "enum") {
         outEnumValues(calf)
     } else if (calf.type === "data") {
-        outDataType(calf, "gr.elaevents.buffalo.schema.BuffaloType", {})
+        printDataType(calf)
     } else {
         throw new Error(`Unknown definition type '${calf.type}' at '${calf.name}'`)
     }
