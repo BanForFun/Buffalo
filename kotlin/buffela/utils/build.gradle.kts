@@ -7,13 +7,13 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "gr.elaevents.buffela"
+group = "gr.elaevents.buffela.schema"
 version = "1.0.0"
 
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "gr.elaevents.buffela"
+        namespace = "gr.elaevents.buffela.schema"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 

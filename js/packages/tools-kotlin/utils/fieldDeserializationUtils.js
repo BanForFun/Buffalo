@@ -9,7 +9,7 @@ import kotlinx.io.readUIntLe
 import kotlinx.io.readULongLe
 import kotlinx.io.readUShortLe
 import kotlinx.io.readByteArray
-import gr.elaevents.buffela.utils.readStringNt`)
+import gr.elaevents.buffela.internal.utils.readStringNt`)
 }
 
 function readPrimitive(typeIndex) {

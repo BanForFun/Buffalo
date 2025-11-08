@@ -1,0 +1,31 @@
+{
+  "Gender": [
+    "FEMALE",
+    "MALE"
+  ],
+  "TokenPayload": {
+    "userId": "Buffer(16)",
+    "role": "Type",
+    "Anonymous": {},
+    "Registered": {
+      "gender": "Gender",
+      "hobbies": "String[UByte]",
+      "with": "Type",
+      "Phone": {
+        "phone": "String"
+      },
+      "Email": {
+        "email": "String"
+      }
+    },
+    "Organizer": {
+      "email": "String"
+    }
+  },
+  "Token": {
+    "version": 1,
+    "expiration": "Double",
+    "signature": "Buffer(32)",
+    "payload": "TokenPayload"
+  }
+}

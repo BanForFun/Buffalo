@@ -46,7 +46,7 @@ function printDataTypeClass(type, superClass, superVars, depth) {
 }
 
 function printDataCalfClass(calf) {
-    const superClass = options.serializerEnabled ? "gr.elaevents.buffela.utils.Serializable" : ""
+    const superClass = options.serializerEnabled ? "gr.elaevents.buffela.schema.Serializable" : ""
     printDataTypeClass(calf, superClass, {}, 0)
 }
 

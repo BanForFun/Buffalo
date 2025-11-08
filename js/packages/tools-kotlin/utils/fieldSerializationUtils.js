@@ -8,7 +8,7 @@ import kotlinx.io.writeUByte
 import kotlinx.io.writeUIntLe
 import kotlinx.io.writeULongLe
 import kotlinx.io.writeUShortLe
-import gr.elaevents.buffela.utils.writeStringNt`)
+import gr.elaevents.buffela.internal.utils.writeStringNt`)
 }
 
 function printWritePrimitive(typeIndex, name) {

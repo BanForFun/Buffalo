@@ -1,4 +1,4 @@
-package gr.elaevents.buffela.utils
+package gr.elaevents.buffela.internal.utils
 
 import kotlinx.io.Buffer
 import kotlinx.io.indexOf

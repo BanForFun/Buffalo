@@ -1,4 +1,4 @@
-package gr.elaevents.buffela.utils
+package gr.elaevents.buffela.schema
 
 import kotlinx.io.Buffer
 
