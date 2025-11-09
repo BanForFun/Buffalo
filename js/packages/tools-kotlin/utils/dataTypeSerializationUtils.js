@@ -8,7 +8,7 @@ function printSerializerVariables(type) {
 }
 
 function printHeaderSerializerFunction(type, depth) {
-    printer.blockStart(`override fun serializeHeader(packet: kotlinx.io.Buffer) {`)
+    printer.blockStart(`override fun serializeHeader(packet: kotlinx.io.Sink) {`)
 
     if (depth > 0)
         printer.line(`super.serializeHeader(packet)`)
@@ -29,7 +29,7 @@ function printHeaderSerializerFunction(type, depth) {
 }
 
 function printBodySerializerFunction(type, depth) {
-    printer.blockStart(`override fun serializeBody(packet: kotlinx.io.Buffer) {`)
+    printer.blockStart(`override fun serializeBody(packet: kotlinx.io.Sink) {`)
 
     if (depth > 0)
         printer.line(`super.serializeBody(packet)`)

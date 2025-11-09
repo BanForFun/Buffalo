@@ -14,7 +14,7 @@ function printConstantValidatorCode(calf) {
 function printDeserializerConstructor(type, depth) {
     const superCall = depth > 0 ? 'super(packet)' : 'super()'
     const modifier = calfUtils.typeProtectedMemberModifier(type)
-    printer.blockStart(`${modifier} constructor(packet: kotlinx.io.Buffer): ${superCall} {`)
+    printer.blockStart(`${modifier} constructor(packet: kotlinx.io.Source): ${superCall} {`)
 
     for (const varName in type.variables)
         printer.line(`this.${varName} = ${readField(type.variables[varName])}`)
@@ -23,13 +23,13 @@ function printDeserializerConstructor(type, depth) {
 }
 
 function printRootTypeHeaderValidatorFunction(type) {
-    printer.blockStart(`private fun validateHeader(packet: kotlinx.io.Buffer) {`)
+    printer.blockStart(`private fun validateHeader(packet: kotlinx.io.Source) {`)
     printConstantValidatorCode(type)
     printer.blockEnd('}')
 }
 
 function printRootTypeDeserializerFunction(type) {
-    printer.blockStart(`fun deserialize(packet: kotlinx.io.Buffer): ${type.name} {`)
+    printer.blockStart(`fun deserialize(packet: kotlinx.io.Source): ${type.name} {`)
 
     printer.line(`validateHeader(packet)`)
 
@@ -62,7 +62,7 @@ function printRootTypeDeserializerObject(type) {
 
 function printSubTypeValidatorFunction(type, superClass, depth) {
     const modifier = calfUtils.typeProtectedMemberModifier(type)
-    printer.blockStart(`${modifier} fun validateHeader(packet: kotlinx.io.Buffer) {`)
+    printer.blockStart(`${modifier} fun validateHeader(packet: kotlinx.io.Source) {`)
 
     if (depth > 1) printer.line(`${superClass}.validateHeader(packet)`)
     printConstantValidatorCode(type)
@@ -71,7 +71,7 @@ function printSubTypeValidatorFunction(type, superClass, depth) {
 }
 
 function printSubTypeDeserializerFunction(type) {
-    printer.blockStart(`fun deserialize(packet: kotlinx.io.Buffer): ${type.name} {`)
+    printer.blockStart(`fun deserialize(packet: kotlinx.io.Source): ${type.name} {`)
 
     printer.line(`validateHeader(packet)`)
     printer.line(`return ${type.name}(packet)`)
