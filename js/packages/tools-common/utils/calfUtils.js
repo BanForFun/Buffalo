@@ -3,11 +3,11 @@ function isTypeAbstract(type) {
 }
 
 function isTypeRoot(type) {
-    return type.leafTypes != null
+    return type.leafPaths != null
 }
 
 function isTypeAmbiguousRoot(type) {
-    return isTypeRoot(type) && type.leafTypes.length > 1
+    return isTypeRoot(type) && type.leafPaths.length > 1
 }
 
 function typeClassModifier(type) {
@@ -18,10 +18,15 @@ function typeProtectedMemberModifier(type) {
     return isTypeAbstract(type) ? "protected" : "private"
 }
 
+function typeInternalMemberModifier(type) {
+    return isTypeAbstract(type) ? "protected" : "internal"
+}
+
 module.exports = {
     isTypeAbstract,
     isTypeRoot,
     isTypeAmbiguousRoot,
     typeClassModifier,
-    typeProtectedMemberModifier
+    typeProtectedMemberModifier,
+    typeInternalMemberModifier
 }

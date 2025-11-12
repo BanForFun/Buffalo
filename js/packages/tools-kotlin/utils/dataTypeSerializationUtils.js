@@ -2,6 +2,11 @@ const { calfUtils } = require("@buffela/tools-common")
 
 const { printWriteField } = require("./fieldSerializationUtils");
 
+function printSerializerVariables(type) {
+    if (type.leafIndex != null)
+        printer.line(`override val _leafIndex: UByte = ${type.leafIndex}u`)
+}
+
 function printHeaderSerializerCode(values) {
     for (const value of values) {
         if (typeof value === 'number') {
@@ -12,30 +17,25 @@ function printHeaderSerializerCode(values) {
     }
 }
 
-function printSerializerFunction(type, superVars, subtypeHeader, isRootAmbiguous) {
+function printSerializerFunction(type) {
     printer.blockStart(`override fun serialize(packet: kotlinx.io.Sink) {`)
 
-    // Header
     if (calfUtils.isTypeRoot(type)) {
         printHeaderSerializerCode(Object.values(type.constants))
-    } else if (!calfUtils.isTypeAbstract(type)) {
-        printer.line(`super.serialize(packet)`)
 
-        if (isRootAmbiguous)
-            printer.line(`packet.writeUByte(${type.leafIndex}u)`)
+        if (calfUtils.isTypeAmbiguousRoot(type))
+            printer.line(`packet.writeUByte(this._leafIndex)`)
 
-        printHeaderSerializerCode(subtypeHeader)
-        printHeaderSerializerCode(Object.values(type.constants))
-    }
-
-    // Body
-    if (!calfUtils.isTypeAbstract(type)) {
         for (const varName in type.variables) {
             printWriteField(type.variables[varName], `this.${varName}`)
         }
+    } else {
+        printer.line(`super.serialize(packet)`)
 
-        for (const varName in superVars) {
-            printWriteField(superVars[varName], `this.${varName}`)
+        printHeaderSerializerCode(Object.values(type.constants))
+
+        for (const varName in type.variables) {
+            printWriteField(type.variables[varName], `this.${varName}`)
         }
     }
 
@@ -43,5 +43,6 @@ function printSerializerFunction(type, superVars, subtypeHeader, isRootAmbiguous
 }
 
 module.exports = {
-    printSerializerFunction
+    printSerializerFunction,
+    printSerializerVariables
 };

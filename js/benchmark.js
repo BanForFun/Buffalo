@@ -25,7 +25,7 @@ const testData = {
 }
 
 const warmUpReps = 10_000
-const measurementReps = 1_000_000
+const measurementReps = 10_000_000
 
 for (let i = 0; i < warmUpReps; i++) {
     serializeCalf(buffela.AuthToken, testData)

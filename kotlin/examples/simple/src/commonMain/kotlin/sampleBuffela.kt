@@ -38,13 +38,28 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
         this.hobbies = hobbies
     }
 
-    override fun serialize(packet: kotlinx.io.Sink) {}
+    override fun serialize(packet: kotlinx.io.Sink) {
+        packet.writeUByte(this._leafIndex)
+        packet.writeStringNt(this.userId)
+        packet.writeUByte(this.gender.ordinal.toUByte())
+        packet.writeUByte(this.hobbies.size.toUByte())
+
+        for (item1 in this.hobbies) {
+            packet.writeStringNt(item1)
+        }
+    }
+
+    protected constructor(packet: kotlinx.io.Source): super(packet) {
+        this.userId = packet.readStringNt()
+        this.gender = Gender.entries[packet.readUByte().toInt()]
+        this.hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() }
+    }
 
     companion object Deserializer {
         fun deserialize(packet: kotlinx.io.Source): User {
             return when(packet.readUByte().toInt()) {
-                0 -> RegisteredWithPhone.deserialize(packet)
-                1 -> RegisteredWithEmail.deserialize(packet)
+                0 -> RegisteredWithPhone(packet)
+                1 -> RegisteredWithEmail(packet)
                 else -> throw IllegalStateException("Invalid subtype index")
             }
         }
@@ -68,33 +83,17 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
             this.countryCode = countryCode
             this.phone = phone
         }
+        override val _leafIndex: UByte = 0u
 
         override fun serialize(packet: kotlinx.io.Sink) {
             super.serialize(packet)
-            packet.writeUByte(0u)
             packet.writeUByte(this.countryCode)
             packet.writeStringNt(this.phone)
-            packet.writeStringNt(this.userId)
-            packet.writeUByte(this.gender.ordinal.toUByte())
-            packet.writeUByte(this.hobbies.size.toUByte())
-
-            for (item1 in this.hobbies) {
-                packet.writeStringNt(item1)
-            }
         }
 
-        private constructor(packet: kotlinx.io.Source): this(
-            countryCode = packet.readUByte(),
-            phone = packet.readStringNt(),
-            userId = packet.readStringNt(),
-            gender = Gender.entries[packet.readUByte().toInt()],
-            hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() },
-        )
-
-        internal companion object Deserializer {
-            fun deserialize(packet: kotlinx.io.Source): RegisteredWithPhone {
-                return RegisteredWithPhone(packet)
-            }
+        internal constructor(packet: kotlinx.io.Source): super(packet) {
+            this.countryCode = packet.readUByte()
+            this.phone = packet.readStringNt()
         }
     }
 
@@ -113,31 +112,15 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
         ) {
             this.email = email
         }
+        override val _leafIndex: UByte = 1u
 
         override fun serialize(packet: kotlinx.io.Sink) {
             super.serialize(packet)
-            packet.writeUByte(1u)
             packet.writeStringNt(this.email)
-            packet.writeStringNt(this.userId)
-            packet.writeUByte(this.gender.ordinal.toUByte())
-            packet.writeUByte(this.hobbies.size.toUByte())
-
-            for (item1 in this.hobbies) {
-                packet.writeStringNt(item1)
-            }
         }
 
-        private constructor(packet: kotlinx.io.Source): this(
-            email = packet.readStringNt(),
-            userId = packet.readStringNt(),
-            gender = Gender.entries[packet.readUByte().toInt()],
-            hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() },
-        )
-
-        internal companion object Deserializer {
-            fun deserialize(packet: kotlinx.io.Source): RegisteredWithEmail {
-                return RegisteredWithEmail(packet)
-            }
+        internal constructor(packet: kotlinx.io.Source): super(packet) {
+            this.email = packet.readStringNt()
         }
     }
 }
@@ -156,6 +139,7 @@ final class AuthToken: gr.elaevents.buffela.schema.Serializable {
         this.signature = signature
         this.user = user
     }
+    override val _leafIndex: UByte = 0u
 
     override fun serialize(packet: kotlinx.io.Sink) {
         packet.writeUByte(1u)
@@ -164,11 +148,11 @@ final class AuthToken: gr.elaevents.buffela.schema.Serializable {
         this.user.serialize(packet)
     }
 
-    private constructor(packet: kotlinx.io.Source): this(
-        issuedAt = packet.readDoubleLe(),
-        signature = packet.readByteArray(32),
-        user = User.deserialize(packet),
-    )
+    internal constructor(packet: kotlinx.io.Source): super(packet) {
+        this.issuedAt = packet.readDoubleLe()
+        this.signature = packet.readByteArray(32)
+        this.user = User.deserialize(packet)
+    }
 
     companion object Deserializer {
         fun deserialize(packet: kotlinx.io.Source): AuthToken {

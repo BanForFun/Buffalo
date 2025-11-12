@@ -50,7 +50,7 @@ function parseType(buffela, typeString, fieldPath) {
     return type
 }
 
-function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
+function linkDataDefinition(buffela, leafPaths, type, path, fieldScope = {}) {
     const fullPath = [...path, type]
 
     const subtypes = []
@@ -60,14 +60,13 @@ function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
     for (const memberName in type) {
         const child = type[memberName]
         if (typeof child === 'object') {
-            linkDataDefinition(buffela, leafTypes, child, fullPath, {...fieldScope})
+            linkDataDefinition(buffela, leafPaths, child, fullPath, {...fieldScope})
 
             child.name = memberName
             child[inspectSymbol] = function() {
                 return `<BuffelaSubtype ${this.name}>`
             }
 
-            child.parent = type
             subtypes.push(child)
         } else {
             if (memberName in fieldScope) {
@@ -103,8 +102,10 @@ function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
     type.constants = constants;
 
     if (!isAbstract) {
-        type.leafIndex = leafTypes.length
-        leafTypes.push(type)
+        type.leafIndex = leafPaths.length
+
+        fullPath.shift()
+        leafPaths.push(fullPath)
     }
 }
 
@@ -147,11 +148,11 @@ function parseBuffelaSchema(buffela) {
         if (Array.isArray(calf)) {
             buffela[calfName] = parseEnum(calf, calfName)
         } else {
-            const leafTypes = []
-            linkDataDefinition(buffela, leafTypes, calf, [])
+            const leafPaths = []
+            linkDataDefinition(buffela, leafPaths, calf, [])
             calf.type = "data"
             calf.name = calfName
-            calf.leafTypes = leafTypes
+            calf.leafPaths = leafPaths
         }
     }
 

@@ -128,17 +128,15 @@ function readCalf(calf, data, packet) {
 
     const hasLeafTypeIndex = calfUtils.isTypeAmbiguousRoot(calf)
     const leafTypeIndex = hasLeafTypeIndex ? packet.readUInt8() : 0
-
-    let type = calf.leafTypes[leafTypeIndex];
-    while (type !== calf) {
-        validateOwnConstants(type, packet);
-        readOwnVariables(type, data, packet);
-        type = type.parent;
-    }
+    const relativePath = calf.leafPaths[leafTypeIndex];
 
     readOwnVariables(calf, data, packet);
-}
 
+    for (const type of relativePath) {
+        validateOwnConstants(type, packet);
+        readOwnVariables(type, data, packet);
+    }
+}
 
 function deserializeCalf(calf, buffer) {
     const data = {}

@@ -626,19 +626,19 @@ When you serialize a sub calf, buffela needs to write some kind of header contai
 
 ```yaml
 RootCalf:
-	ChildCalf1: (id 1)
-		
+  ChildCalf1: (id 1)
+	
   ChildCalf2:
-  	GrandchildCalf1: (id 2)
-  	GrandchildCalf2: (id 3)
+    GrandchildCalf1: (id 2)
+    GrandchildCalf2: (id 3)
 ```
 
 Additionally, even if you have nested sub calves, in the weird scenario that there is only one leaf calf, buffela skips writing the header entirely. Example:
 
 ```yaml
 RootCalf:
-	ChildCalf:
-		GrandchildCalf:
+  ChildCalf:
+    GrandchildCalf:
 ```
 
 
@@ -647,27 +647,11 @@ RootCalf:
 
 Serialized packets have the following structure:
 
-1. Root calf constants
-
-2. Leaf calf id
-
-3. Child calf constants
-
-   Grandchild calf constants
-
-   ...
-
-4. Root calf variables
-
-   Child calf variables
-
-   Grandchild calf variables
-
-   ...
-
-
-
-This structure achieves the following goals:
-
-- Leaf calf ids depend on the root calf constants
-- No variable decoding is attempted before validating all constants
+```
+Root calf constants
+Leaf calf id
+Root calf variables
+    Child calf constants
+    Child calf variables
+        ...
+```

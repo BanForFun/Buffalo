@@ -123,17 +123,16 @@ function writeOwnVariables(type, data, packet) {
     }
 }
 
-function writeFields(type, data, packet, writeConstants) {
-    const leafIndex = calfUtils.isTypeAbstract(type)
-        ? writeFields(data[type.subtypeKey], data, packet, true)
+function writeSubtype(type, data, packet) {
+    return calfUtils.isTypeAbstract(type)
+        ? writeFields(data[type.subtypeKey], data, packet)
         : type.leafIndex;
+}
 
-    if (writeConstants)
-        writeOwnConstants(type, packet)
-
+function writeFields(type, data, packet) {
+    writeOwnConstants(type, packet)
     writeOwnVariables(type, data, packet)
-
-    return leafIndex
+    return writeSubtype(type, data, packet)
 }
 
 function writeCalf(calf, data, packet) {
@@ -143,7 +142,9 @@ function writeCalf(calf, data, packet) {
     if (calfUtils.isTypeAmbiguousRoot(calf))
         packet.writeUInt8(0) //Will get replaced
 
-    const leafIndex = writeFields(calf, data, packet, false)
+    writeOwnVariables(calf, data, packet)
+
+    const leafIndex = writeSubtype(calf, data, packet)
     if (calfUtils.isTypeAmbiguousRoot(calf))
         packet.writeUInt8(leafIndex, leafIndexOffset)
 }

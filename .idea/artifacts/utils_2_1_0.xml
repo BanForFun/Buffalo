@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="utils-2.1.0">
+    <output-path>$PROJECT_DIR$/kotlin/buffela/utils/build/libs</output-path>
+    <root id="archive" name="utils-2.1.0.jar">
+      <element id="module-output" name="buffela.utils.androidMain" />
+    </root>
+  </artifact>
+</component>

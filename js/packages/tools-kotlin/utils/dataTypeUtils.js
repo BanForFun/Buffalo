@@ -1,6 +1,7 @@
 const { calfUtils } = require("@buffela/tools-common");
 
 const {
+    printSerializerVariables,
     printSerializerFunction
 } = require("./dataTypeSerializationUtils");
 const {
@@ -12,7 +13,7 @@ const {
     printDeserializerObject
 } = require("./dataTypeDeserializationUtils");
 
-function printDataTypeClass(type, superClass, superVars, subtypeHeader, isRootAmbiguous) {
+function printDataTypeClass(type, superClass, superVars) {
     const modifier = calfUtils.typeClassModifier(type)
     if (superClass)
         printer.blockStart(`${modifier} class ${type.name}: ${superClass} {`)
@@ -23,23 +24,20 @@ function printDataTypeClass(type, superClass, superVars, subtypeHeader, isRootAm
     printDataConstructor(type, superVars)
 
     if (options.serializerEnabled) {
-        printSerializerFunction(type, superVars, subtypeHeader, isRootAmbiguous)
+        printSerializerVariables(type)
+        printSerializerFunction(type)
     }
 
     if (options.deserializerEnabled) {
-        printDeserializerConstructor(type, superVars)
-        printDeserializerObject(type, subtypeHeader)
+        printDeserializerConstructor(type)
+        printDeserializerObject(type)
     }
 
     for (const subtype of type.subtypes) {
         printDataTypeClass(
             subtype,
             type.name,
-            { ...type.variables, ...superVars },
-            calfUtils.isTypeRoot(type)
-                ? subtypeHeader
-                : { ...subtypeHeader, ...Object.values(type.constants) },
-            isRootAmbiguous
+            { ...superVars, ...type.variables }
         )
     }
 
@@ -48,7 +46,7 @@ function printDataTypeClass(type, superClass, superVars, subtypeHeader, isRootAm
 
 function printDataCalfClass(calf) {
     const superClass = options.serializerEnabled ? "gr.elaevents.buffela.schema.Serializable" : ""
-    printDataTypeClass(calf, superClass, {}, [],  calfUtils.isTypeAmbiguousRoot(calf))
+    printDataTypeClass(calf, superClass, {})
 }
 
 module.exports = { printDataCalfClass }
