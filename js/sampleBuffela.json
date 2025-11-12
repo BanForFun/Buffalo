@@ -4,7 +4,7 @@
     "MALE"
   ],
   "User": {
-    "userId": "Buffer(16)",
+    "userId": "String",
     "gender": "Gender",
     "hobbies": "String[UByte]",
     "registeredWith": "Type",
@@ -18,7 +18,7 @@
   },
   "AuthToken": {
     "version": 1,
-    "expiration": "Double",
+    "issuedAt": "Double",
     "signature": "Buffer(32)",
     "user": "User"
   }

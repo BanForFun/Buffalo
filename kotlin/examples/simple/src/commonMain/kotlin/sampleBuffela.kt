@@ -38,32 +38,10 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
         this.hobbies = hobbies
     }
 
-    override fun serializeHeader(packet: kotlinx.io.Sink) {
-        packet.writeUByte(_leafIndex)
-    }
-
-    override fun serializeBody(packet: kotlinx.io.Sink) {
-        packet.writeStringNt(this.userId)
-        packet.writeUByte(this.gender.ordinal.toUByte())
-        packet.writeUByte(this.hobbies.size.toUByte())
-
-        for (item1 in this.hobbies) {
-            packet.writeStringNt(item1)
-        }
-    }
-
-    protected constructor(packet: kotlinx.io.Source): super() {
-        this.userId = packet.readStringNt()
-        this.gender = Gender.entries[packet.readUByte().toInt()]
-        this.hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() }
-    }
+    override fun serialize(packet: kotlinx.io.Sink) {}
 
     companion object Deserializer {
-        private fun validateHeader(packet: kotlinx.io.Source) {}
-
         fun deserialize(packet: kotlinx.io.Source): User {
-            validateHeader(packet)
-
             return when(packet.readUByte().toInt()) {
                 0 -> RegisteredWithPhone.deserialize(packet)
                 1 -> RegisteredWithEmail.deserialize(packet)
@@ -90,28 +68,31 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
             this.countryCode = countryCode
             this.phone = phone
         }
-        override val _leafIndex: UByte = 0u
 
-        override fun serializeHeader(packet: kotlinx.io.Sink) {
-            super.serializeHeader(packet)
-        }
-
-        override fun serializeBody(packet: kotlinx.io.Sink) {
-            super.serializeBody(packet)
+        override fun serialize(packet: kotlinx.io.Sink) {
+            super.serialize(packet)
+            packet.writeUByte(0u)
             packet.writeUByte(this.countryCode)
             packet.writeStringNt(this.phone)
+            packet.writeStringNt(this.userId)
+            packet.writeUByte(this.gender.ordinal.toUByte())
+            packet.writeUByte(this.hobbies.size.toUByte())
+
+            for (item1 in this.hobbies) {
+                packet.writeStringNt(item1)
+            }
         }
 
-        private constructor(packet: kotlinx.io.Source): super(packet) {
-            this.countryCode = packet.readUByte()
-            this.phone = packet.readStringNt()
-        }
+        private constructor(packet: kotlinx.io.Source): this(
+            countryCode = packet.readUByte(),
+            phone = packet.readStringNt(),
+            userId = packet.readStringNt(),
+            gender = Gender.entries[packet.readUByte().toInt()],
+            hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() },
+        )
 
         internal companion object Deserializer {
-            private fun validateHeader(packet: kotlinx.io.Source) {}
-
             fun deserialize(packet: kotlinx.io.Source): RegisteredWithPhone {
-                validateHeader(packet)
                 return RegisteredWithPhone(packet)
             }
         }
@@ -132,26 +113,29 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
         ) {
             this.email = email
         }
-        override val _leafIndex: UByte = 1u
 
-        override fun serializeHeader(packet: kotlinx.io.Sink) {
-            super.serializeHeader(packet)
-        }
-
-        override fun serializeBody(packet: kotlinx.io.Sink) {
-            super.serializeBody(packet)
+        override fun serialize(packet: kotlinx.io.Sink) {
+            super.serialize(packet)
+            packet.writeUByte(1u)
             packet.writeStringNt(this.email)
+            packet.writeStringNt(this.userId)
+            packet.writeUByte(this.gender.ordinal.toUByte())
+            packet.writeUByte(this.hobbies.size.toUByte())
+
+            for (item1 in this.hobbies) {
+                packet.writeStringNt(item1)
+            }
         }
 
-        private constructor(packet: kotlinx.io.Source): super(packet) {
-            this.email = packet.readStringNt()
-        }
+        private constructor(packet: kotlinx.io.Source): this(
+            email = packet.readStringNt(),
+            userId = packet.readStringNt(),
+            gender = Gender.entries[packet.readUByte().toInt()],
+            hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() },
+        )
 
         internal companion object Deserializer {
-            private fun validateHeader(packet: kotlinx.io.Source) {}
-
             fun deserialize(packet: kotlinx.io.Source): RegisteredWithEmail {
-                validateHeader(packet)
                 return RegisteredWithEmail(packet)
             }
         }
@@ -172,33 +156,25 @@ final class AuthToken: gr.elaevents.buffela.schema.Serializable {
         this.signature = signature
         this.user = user
     }
-    override val _leafIndex: UByte = 0u
 
-    override fun serializeHeader(packet: kotlinx.io.Sink) {
+    override fun serialize(packet: kotlinx.io.Sink) {
         packet.writeUByte(1u)
-    }
-
-    override fun serializeBody(packet: kotlinx.io.Sink) {
         packet.writeDoubleLe(this.issuedAt)
         packet.write(this.signature)
         this.user.serialize(packet)
     }
 
-    private constructor(packet: kotlinx.io.Source): super() {
-        this.issuedAt = packet.readDoubleLe()
-        this.signature = packet.readByteArray(32)
-        this.user = User.deserialize(packet)
-    }
+    private constructor(packet: kotlinx.io.Source): this(
+        issuedAt = packet.readDoubleLe(),
+        signature = packet.readByteArray(32),
+        user = User.deserialize(packet),
+    )
 
     companion object Deserializer {
-        private fun validateHeader(packet: kotlinx.io.Source) {
+        fun deserialize(packet: kotlinx.io.Source): AuthToken {
             if (
                 packet.readUByte() != 1u.toUByte()
             ) throw IllegalStateException("Incompatible packet version")
-        }
-
-        fun deserialize(packet: kotlinx.io.Source): AuthToken {
-            validateHeader(packet)
             return AuthToken(packet)
         }
     }

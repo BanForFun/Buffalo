@@ -10,9 +10,9 @@ fun main() {
         user = User.RegisteredWithPhone(
             userId = "d6c47b4b-6983-48eb-a957-a954798f6e57",
             gender = Gender.FEMALE,
-            hobbies = arrayOf("coffee", "going out"),
+            hobbies = arrayOf("coffee", "reading", "going out"),
             countryCode = 30u,
-            phone = "This is my phone",
+            phone = "691 234 5678",
         )
     )
 

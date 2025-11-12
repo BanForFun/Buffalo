@@ -1,6 +1,7 @@
 const {SmartBuffer} = require("smart-buffer");
 
 const {typeMap} = require("@buffela/parser");
+const {calfUtils} = require("@buffela/tools-common");
 
 /**
  * @param {Field|number} field
@@ -115,35 +116,34 @@ function validateOwnConstants(type, packet) {
     }
 }
 
-function readOwnVariables(type, object, packet) {
+function readOwnVariables(type, data, packet) {
     for (const varName in type.variables) {
         const field = type.variables[varName];
-        object[varName] = readField(field, packet);
+        data[varName] = readField(field, packet);
     }
 }
 
-function readCalf(calf, object, packet) {
-    validateOwnConstants(calf, packet)
+function readCalf(calf, data, packet) {
+    validateOwnConstants(calf, packet);
 
-    const hasLeafTypeIndex = calf.leafTypes.length > 1
+    const hasLeafTypeIndex = calfUtils.isTypeAmbiguousRoot(calf)
     const leafTypeIndex = hasLeafTypeIndex ? packet.readUInt8() : 0
-    const leafTypePath = calf.leafTypes[leafTypeIndex]
 
-    for (const type of leafTypePath) {
-        validateOwnConstants(type, packet)
+    let type = calf.leafTypes[leafTypeIndex];
+    while (type !== calf) {
+        validateOwnConstants(type, packet);
+        readOwnVariables(type, data, packet);
+        type = type.parent;
     }
 
-    readOwnVariables(calf, object, packet)
-    for (const type of leafTypePath) {
-        readOwnVariables(type, object, packet)
-    }
+    readOwnVariables(calf, data, packet);
 }
 
 
 function deserializeCalf(calf, buffer) {
-    const object = {}
-    readCalf(calf, object, SmartBuffer.fromBuffer(buffer))
-    return object
+    const data = {}
+    readCalf(calf, data, SmartBuffer.fromBuffer(buffer))
+    return data
 }
 
 module.exports = deserializeCalf

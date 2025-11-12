@@ -2,8 +2,18 @@ const { calfUtils } = require("@buffela/tools-common")
 
 const {readField} = require("./fieldDeserializationUtils");
 
-function printConstantValidatorCode(calf) {
-    const values = Object.values(calf.constants)
+function getSubtypeRelativePath(type) {
+    const path = [];
+    while (!calfUtils.isTypeRoot(type)) {
+        path.push(type.name);
+        type = type.parent;
+    }
+
+    path.reverse()
+    return path;
+}
+
+function printHeaderValidatorCode(values) {
     if (values.length === 0) return;
 
     printer.blockStart(`if (`)
@@ -11,89 +21,62 @@ function printConstantValidatorCode(calf) {
     printer.blockEnd(') throw IllegalStateException("Incompatible packet version")')
 }
 
-function printDeserializerConstructor(type, depth) {
-    const superCall = depth > 0 ? 'super(packet)' : 'super()'
-    const modifier = calfUtils.typeProtectedMemberModifier(type)
-    printer.blockStart(`${modifier} constructor(packet: kotlinx.io.Source): ${superCall} {`)
-
-    for (const varName in type.variables)
-        printer.line(`this.${varName} = ${readField(type.variables[varName])}`)
-
-    printer.blockEnd('}')
-}
-
-function printRootTypeHeaderValidatorFunction(type) {
-    printer.blockStart(`private fun validateHeader(packet: kotlinx.io.Source) {`)
-    printConstantValidatorCode(type)
-    printer.blockEnd('}')
-}
-
-function printRootTypeDeserializerFunction(type) {
+function printRootTypeDeserializerObject(type) {
+    printer.blockStart(`companion object Deserializer {`)
     printer.blockStart(`fun deserialize(packet: kotlinx.io.Source): ${type.name} {`)
 
-    printer.line(`validateHeader(packet)`)
+    printHeaderValidatorCode(Object.values(type.constants))
 
     if (calfUtils.isTypeAmbiguousRoot(type)) {
         printer.blockStart(`return when(packet.readUByte().toInt()) {`)
 
         for (let i = 0; i < type.leafTypes.length; i++) {
-            printer.line(`${i} -> ${type.leafTypes[i].map(t => t.name).join('.')}.deserialize(packet)`)
+            const leafType = type.leafTypes[i]
+            printer.line(`${i} -> ${getSubtypeRelativePath(leafType).join('.')}.deserialize(packet)`)
         }
         printer.line(`else -> throw IllegalStateException("Invalid subtype index")`)
 
         printer.blockEnd('}')
+    } else if (type.leafTypes[0] === type) {
+        printer.line(`return ${type.name}(packet)`)
     } else {
-        const leafTypePath = type.leafTypes[0]
-        const leafTypeClass = leafTypePath.length > 0 ? leafTypePath.map(t => t.name).join('.') : type.name
-        printer.line(`return ${leafTypeClass}(packet)`)
+        printer.line(`${getSubtypeRelativePath(type.leafTypes[0]).join('.')}.deserialize(packet)`)
     }
 
     printer.blockEnd('}')
-}
-
-function printRootTypeDeserializerObject(type) {
-    printer.blockStart(`companion object Deserializer {`)
-
-    printRootTypeHeaderValidatorFunction(type)
-    printRootTypeDeserializerFunction(type)
-
     printer.blockEnd('}')
 }
 
-function printSubTypeValidatorFunction(type, superClass, depth) {
-    const modifier = calfUtils.typeProtectedMemberModifier(type)
-    printer.blockStart(`${modifier} fun validateHeader(packet: kotlinx.io.Source) {`)
-
-    if (depth > 1) printer.line(`${superClass}.validateHeader(packet)`)
-    printConstantValidatorCode(type)
-
-    printer.blockEnd('}')
-}
-
-function printSubTypeDeserializerFunction(type) {
+function printSubTypeDeserializerObject(type, subtypeHeader) {
+    printer.blockStart(`internal companion object Deserializer {`)
     printer.blockStart(`fun deserialize(packet: kotlinx.io.Source): ${type.name} {`)
 
-    printer.line(`validateHeader(packet)`)
+    printHeaderValidatorCode(subtypeHeader)
     printer.line(`return ${type.name}(packet)`)
 
     printer.blockEnd('}')
-}
-
-function printSubTypeDeserializerObject(type, superClass, depth) {
-    printer.blockStart(`internal companion object Deserializer {`)
-
-    printSubTypeValidatorFunction(type, superClass, depth)
-    if (!calfUtils.isTypeAbstract(type))
-        printSubTypeDeserializerFunction(type)
-
     printer.blockEnd('}')
 }
 
-function printDeserializerObject(type, superClass, depth) {
-    if (depth === 0)
+function printDeserializerObject(type, subtypeHeader) {
+    if (calfUtils.isTypeRoot(type))
         printRootTypeDeserializerObject(type)
-    else
-        printSubTypeDeserializerObject(type, superClass, depth)
+    else if (!calfUtils.isTypeAbstract(type))
+        printSubTypeDeserializerObject(type, subtypeHeader)
+}
+
+function printDeserializerConstructor(type, superVars) {
+    if (calfUtils.isTypeAbstract(type)) return;
+
+    printer.blockStart(`private constructor(packet: kotlinx.io.Source): this(`)
+
+    for (const varName in type.variables)
+        printer.line(`${varName} = ${readField(type.variables[varName])},`)
+
+    for (const varName in superVars)
+        printer.line(`${varName} = ${readField(superVars[varName])},`)
+
+    printer.blockEnd(')')
 }
 
 module.exports = {

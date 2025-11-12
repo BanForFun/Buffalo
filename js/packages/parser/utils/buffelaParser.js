@@ -67,7 +67,7 @@ function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
                 return `<BuffelaSubtype ${this.name}>`
             }
 
-            // child.index = subtypes.length
+            child.parent = type
             subtypes.push(child)
         } else {
             if (memberName in fieldScope) {
@@ -83,10 +83,11 @@ function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
                 type.subtypeKey = memberName
             } else {
                 const fieldType = parseType(buffela, child, fullPath)
-                if (typeof fieldType === 'object')
+                if (typeof fieldType === 'object') {
                     variables[memberName] = fieldType
-                else
+                } else {
                     constants[memberName] = fieldType
+                }
             }
 
             delete type[memberName]
@@ -97,16 +98,14 @@ function linkDataDefinition(buffela, leafTypes, type, path, fieldScope = {}) {
     if (isAbstract && type.subtypeKey == null)
         throw new Error(`No type field defined for abstract type '${path}'`)
 
-    if (!isAbstract) {
-        type.leafIndex = leafTypes.length
-
-        fullPath.shift() //Remove root from start
-        leafTypes.push(fullPath)
-    }
-
     type.subtypes = subtypes;
     type.variables = variables;
     type.constants = constants;
+
+    if (!isAbstract) {
+        type.leafIndex = leafTypes.length
+        leafTypes.push(type)
+    }
 }
 
 function parseEnum(calf, enumName) {

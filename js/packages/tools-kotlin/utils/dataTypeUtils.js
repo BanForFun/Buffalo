@@ -1,8 +1,7 @@
 const { calfUtils } = require("@buffela/tools-common");
 
 const {
-    printSerializerVariables,
-    printSerializerFunctions
+    printSerializerFunction
 } = require("./dataTypeSerializationUtils");
 const {
     printDataVariables,
@@ -13,7 +12,7 @@ const {
     printDeserializerObject
 } = require("./dataTypeDeserializationUtils");
 
-function printDataTypeClass(type, superClass, superVars, depth) {
+function printDataTypeClass(type, superClass, superVars, subtypeHeader, isRootAmbiguous) {
     const modifier = calfUtils.typeClassModifier(type)
     if (superClass)
         printer.blockStart(`${modifier} class ${type.name}: ${superClass} {`)
@@ -24,21 +23,23 @@ function printDataTypeClass(type, superClass, superVars, depth) {
     printDataConstructor(type, superVars)
 
     if (options.serializerEnabled) {
-        printSerializerVariables(type)
-        printSerializerFunctions(type, depth)
+        printSerializerFunction(type, superVars, subtypeHeader, isRootAmbiguous)
     }
 
     if (options.deserializerEnabled) {
-        printDeserializerConstructor(type, depth)
-        printDeserializerObject(type, superClass, depth)
+        printDeserializerConstructor(type, superVars)
+        printDeserializerObject(type, subtypeHeader)
     }
 
     for (const subtype of type.subtypes) {
         printDataTypeClass(
             subtype,
             type.name,
-            { ...superVars, ...type.variables },
-            depth + 1
+            { ...type.variables, ...superVars },
+            calfUtils.isTypeRoot(type)
+                ? subtypeHeader
+                : { ...subtypeHeader, ...Object.values(type.constants) },
+            isRootAmbiguous
         )
     }
 
@@ -47,7 +48,7 @@ function printDataTypeClass(type, superClass, superVars, depth) {
 
 function printDataCalfClass(calf) {
     const superClass = options.serializerEnabled ? "gr.elaevents.buffela.schema.Serializable" : ""
-    printDataTypeClass(calf, superClass, {}, 0)
+    printDataTypeClass(calf, superClass, {}, [],  calfUtils.isTypeAmbiguousRoot(calf))
 }
 
 module.exports = { printDataCalfClass }

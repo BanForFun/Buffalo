@@ -1,6 +1,7 @@
 const { SmartBuffer } = require('smart-buffer')
 
 const { typeMap } = require('@buffela/parser')
+const { calfUtils } = require("@buffela/tools-common");
 
 /**
  * @typedef {object} Field
@@ -104,14 +105,6 @@ function writeField(field, value, packet, dimension = field.dimensions?.length) 
     }
 }
 
-function findLeafTypeIndex(type, object) {
-    while (type.leafIndex == null) {
-        type = object[type.subtypeKey]
-    }
-
-    return type.leafIndex
-}
-
 function writeOwnConstants(type, packet) {
     for (const constName in type.constants) {
         const field = type.constants[constName]
@@ -123,36 +116,41 @@ function writeOwnConstants(type, packet) {
     }
 }
 
-function writeOwnVariables(type, object, packet) {
+function writeOwnVariables(type, data, packet) {
     for (const varName in type.variables) {
         const field = type.variables[varName]
-        writeField(field, object[varName], packet)
+        writeField(field, data[varName], packet)
     }
 }
 
-function writeCalf(calf, object, packet) {
-    const leafTypeIndex = findLeafTypeIndex(calf, object)
-    const leafTypePath = calf.leafTypes[leafTypeIndex]
+function writeFields(type, data, packet, writeConstants) {
+    const leafIndex = calfUtils.isTypeAbstract(type)
+        ? writeFields(data[type.subtypeKey], data, packet, true)
+        : type.leafIndex;
 
+    if (writeConstants)
+        writeOwnConstants(type, packet)
+
+    writeOwnVariables(type, data, packet)
+
+    return leafIndex
+}
+
+function writeCalf(calf, data, packet) {
     writeOwnConstants(calf, packet)
 
-    if (calf.leafTypes.length > 1)
-        packet.writeUInt8(leafTypeIndex) //Will get replaced
+    const leafIndexOffset = packet.writeOffset;
+    if (calfUtils.isTypeAmbiguousRoot(calf))
+        packet.writeUInt8(0) //Will get replaced
 
-    for (const type of leafTypePath) {
-        writeOwnConstants(type, packet)
-    }
-
-    writeOwnVariables(calf, object, packet)
-
-    for (const type of leafTypePath) {
-        writeOwnVariables(type, object, packet)
-    }
+    const leafIndex = writeFields(calf, data, packet, false)
+    if (calfUtils.isTypeAmbiguousRoot(calf))
+        packet.writeUInt8(leafIndex, leafIndexOffset)
 }
 
-function serializeCalf(calf, object) {
+function serializeCalf(calf, data) {
     const packet = new SmartBuffer()
-    writeCalf(calf, object, packet)
+    writeCalf(calf, data, packet)
     return packet.toBuffer()
 }
 
