@@ -1,6 +1,6 @@
 {
   "name": "@buffela/tools",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Type definition generator for the buffela wire protocol",
   "bin": {
     "buffela-to-types": "dist/buffela-to-types.js",

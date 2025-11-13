@@ -131,7 +131,11 @@ function readCalf(calf, data, packet) {
 
     readOwnVariables(calf, data, packet);
 
+    let parentType = calf;
     for (const type of relativePath) {
+        data[parentType.subtypeKey] = type;
+        parentType = type;
+
         validateOwnConstants(type, packet);
         readOwnVariables(type, data, packet);
     }

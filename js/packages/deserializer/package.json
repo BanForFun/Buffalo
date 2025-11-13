@@ -1,6 +1,6 @@
 {
   "name": "@buffela/deserializer",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Deserializer for the buffela wire protocol",
   "type": "module",
   "types": "types/index.d.ts",
