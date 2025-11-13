@@ -1,4 +1,4 @@
-import { arrayTypes, lengthTypes, subtypeType } from './buffelaTypes.js'
+import { arrayTypes, lengthTypes, primitiveTypes, subtypeType } from './buffelaTypes.js'
 
 function enumPattern(...options) {
     return `(${options.join('|')})`
@@ -16,8 +16,16 @@ const buffelaSchema = {
             "patternProperties": {
                 "^[a-z][a-zA-Z]*$": {
                     "anyOf": [
-                        { "type": "string", "pattern": `^${arrayTypePattern}\\(${lengthTypePattern}\\)${arraySuffixPattern}$` },
-                        { "type": "string", "pattern": `^(?!${subtypeType})(?!${arrayTypePattern})[A-Z][a-zA-Z]+${arraySuffixPattern}$` },
+                        {
+                            "type": "string",
+                            "pattern": `^${arrayTypePattern}\\(${lengthTypePattern}\\)${arraySuffixPattern}$`,
+                            "enum": arrayTypes // For editor suggestions
+                        },
+                        {
+                            "type": "string",
+                            "pattern": `^(?!${subtypeType})(?!${arrayTypePattern})[A-Z][a-zA-Z]+${arraySuffixPattern}$`,
+                            "enum": primitiveTypes // For editor suggestions
+                        },
                         { "type": "string", "const": subtypeType },
                         { "type": "number" },
                     ]

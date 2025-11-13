@@ -68,3 +68,5 @@ export const typeMap = TypeMap({ ...primitiveTypeMap, ...arrayTypeMap })
 export const lengthTypes = Object.keys(lengthTypeMap)
 
 export const arrayTypes = Object.keys(arrayTypeMap)
+
+export const primitiveTypes = Object.keys(primitiveTypeMap)
