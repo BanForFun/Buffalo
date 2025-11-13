@@ -3,7 +3,7 @@ Gender:
   - MALE
 
 User:
-  userId: String
+  userId: String(36)
   gender: Gender
   hobbies: String[UByte]
   registeredWith: Type

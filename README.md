@@ -10,7 +10,7 @@ Gender:
   - MALE
 
 User:
-  userId: String
+  userId: String(36)
   gender: Gender
   hobbies: String[UByte]
   registeredWith: Type
@@ -452,13 +452,25 @@ You should also avoid using a **ByteArray** for transmitting binary data. Instea
 
 
 
+##### String
+
+The **String** type is a hybrid type, meaning that it can be used as *both* a primitive and an array type. If you expect a string to ALWAYS be of a certain UTF-8 byte length, then you can add a `(SIZE)` suffix. For example, if you want to represent a UUID string:
+
+```yaml
+User:
+  userId: String(36)
+  ...
+```
+
+
+
 ### Sub (data) calves
 
 Sometimes you may need a data calf that can take multiple forms. For example, imagine a User structure for an application where users have the choice of signing up with either an email address or a phone number. Each user will either have a phone number or an email address, but never both. To represent this kind of either-or relationship between groups of fields, we have sub calves. For example:
 
 ```yaml
 User:
-  userId: String
+  userId: String(36)
   ...
   
   registeredWith: Type
@@ -561,7 +573,7 @@ AuthToken:
 
 ```yaml
 User:
-  userId: String
+  userId: String(36)
   registeredWith: Type
 
   RegisteredWithEmail:
@@ -577,7 +589,7 @@ User:
   RegisteredWithEmail:
     ...
   
-  userId: String
+  userId: String(36)
   
   RegisteredWithPhone:
     ...
@@ -589,7 +601,7 @@ but NOT the same as:
 
 ```yaml
 User:
-  userId: String
+  userId: String(36)
   registeredWith: Type
 
   RegisteredWithPhone:

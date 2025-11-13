@@ -1,6 +1,6 @@
 {
   "name": "@buffela/parser",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Parser for the buffela wire protocol",
   "type": "module",
   "types": "dist/index.d.ts",

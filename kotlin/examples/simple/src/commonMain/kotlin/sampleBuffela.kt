@@ -7,6 +7,7 @@ import kotlinx.io.writeUByte
 import kotlinx.io.writeUIntLe
 import kotlinx.io.writeULongLe
 import kotlinx.io.writeUShortLe
+import kotlinx.io.writeString
 import gr.elaevents.buffela.internal.utils.writeStringNt
 
 import kotlinx.io.readDoubleLe
@@ -16,6 +17,7 @@ import kotlinx.io.readUIntLe
 import kotlinx.io.readULongLe
 import kotlinx.io.readUShortLe
 import kotlinx.io.readByteArray
+import kotlinx.io.readString
 import gr.elaevents.buffela.internal.utils.readStringNt
 
 enum class Gender {
@@ -40,7 +42,7 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
 
     override fun serialize(packet: kotlinx.io.Sink) {
         packet.writeUByte(this._leafIndex)
-        packet.writeStringNt(this.userId)
+        packet.writeString(this.userId)
         packet.writeUByte(this.gender.ordinal.toUByte())
         packet.writeUByte(this.hobbies.size.toUByte())
 
@@ -50,7 +52,7 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
     }
 
     protected constructor(packet: kotlinx.io.Source): super(packet) {
-        this.userId = packet.readStringNt()
+        this.userId = packet.readString(36)
         this.gender = Gender.entries[packet.readUByte().toInt()]
         this.hobbies = Array(packet.readUByte().toInt()) { _ -> packet.readStringNt() }
     }

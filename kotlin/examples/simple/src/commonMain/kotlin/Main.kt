@@ -2,6 +2,7 @@ package gr.elaevents.buffela.examples.simple
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
+import kotlinx.io.writeString
 
 fun main() {
     val token = AuthToken(

@@ -9,13 +9,12 @@ import kotlinx.io.readUIntLe
 import kotlinx.io.readULongLe
 import kotlinx.io.readUShortLe
 import kotlinx.io.readByteArray
+import kotlinx.io.readString
 import gr.elaevents.buffela.internal.utils.readStringNt`)
 }
 
-function readPrimitive(typeIndex) {
+function readSimpleType(typeIndex) {
     switch (typeIndex) {
-        case typeMap.String.index:
-            return `packet.readStringNt()`
         case typeMap.Boolean.index:
             return `packet.readUByte() > 0u`
         case typeMap.Byte.index:
@@ -39,7 +38,7 @@ function readPrimitive(typeIndex) {
         case typeMap.ULong.index:
             return `packet.readULongLe()`
         default:
-            throw new Error(`Invalid primitive type with index ${typeIndex}`)
+            throw new Error(`Invalid type with index ${typeIndex}`)
     }
 }
 
@@ -60,7 +59,7 @@ function readSize(field) {
 
 function readArray(field, typeIndex) {
     const size = readSize(field.size)
-    return `${typeMap[field.base].kt}(${size}) { _ -> ${readPrimitive(typeIndex)} }`
+    return `${typeMap[field.base].kt}(${size}) { _ -> ${readSimpleType(typeIndex)} }`
 }
 
 function readField(field, dimension = field.dimensions?.length) {
@@ -74,6 +73,11 @@ function readField(field, dimension = field.dimensions?.length) {
     if (typeof field.base === 'number') {
         // Built-in type
         switch(field.base) {
+            case typeMap.String.index:
+                if (typeof field.size === 'number')
+                    return `packet.readString(${field.size})`
+                else
+                    return `packet.readStringNt()`
             case typeMap.IntArray.index:
                 return readArray(field, typeMap.Int.index)
             case typeMap.ShortArray.index:
@@ -100,7 +104,7 @@ function readField(field, dimension = field.dimensions?.length) {
                 const size = readSize(field.size)
                 return `packet.readByteArray(${size})`
             default:
-                return readPrimitive(field.base)
+                return readSimpleType(field.base)
         }
     } else if (typeof field.base === 'object') {
         const calf = field.base

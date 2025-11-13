@@ -3,7 +3,11 @@ import { SmartBuffer } from 'smart-buffer'
 import { typeMap, calfUtils } from '@buffela/parser'
 
 /**
- * @typedef {object} Field
+ * @typedef {VariableField|number} Field
+ */
+
+/**
+ * @typedef {object} VariableField
  * @property {object|number} base
  * @property {Field[]} dimensions
  * @property {Field?} size
@@ -11,7 +15,7 @@ import { typeMap, calfUtils } from '@buffela/parser'
 
 /**
  * 
- * @param {Field|number} field
+ * @param {Field} field
  * @param {any} value 
  * @param {SmartBuffer} packet
  * @param {number|undefined} dimension
@@ -36,7 +40,11 @@ function writeField(field, value, packet, dimension = field.dimensions?.length) 
         // Built-in type
         switch(field.base) {
         case typeMap.String.index:
-            packet.writeStringNT(value)
+            if (typeof field.size === 'number')
+                packet.writeString(value)
+            else
+                packet.writeStringNT(value)
+
             break;
         case typeMap.Boolean.index:
             packet.writeUInt8(value ? 1 : 0)

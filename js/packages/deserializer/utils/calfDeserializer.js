@@ -3,7 +3,18 @@ import {SmartBuffer} from "smart-buffer";
 import {typeMap, calfUtils} from "@buffela/parser";
 
 /**
- * @param {Field|number} field
+ * @typedef {VariableField|number} Field
+ */
+
+/**
+ * @typedef {object} VariableField
+ * @property {object|number} base
+ * @property {Field[]} dimensions
+ * @property {Field?} size
+ */
+
+/**
+ * @param {Field} field
  * @param {SmartBuffer} packet
  * @param {number|undefined} dimension
  * @returns {unknown}
@@ -27,7 +38,10 @@ function readField(field, packet, dimension = field.dimensions?.length) {
         // Built-in type
         switch(field.base) {
             case typeMap.String.index:
-                return packet.readStringNT()
+                if (typeof field.size === 'number')
+                    return packet.readString(field.size)
+                else
+                    return packet.readStringNT()
             case typeMap.Boolean.index:
                 return !!packet.readUInt8()
             case typeMap.Byte.index:

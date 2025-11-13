@@ -1,6 +1,6 @@
 {
   "name": "@buffela/deserializer",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Deserializer for the buffela wire protocol",
   "type": "module",
   "types": "types/index.d.ts",
@@ -42,6 +42,6 @@
   "homepage": "https://github.com/BanForFun/Buffela#readme",
   "dependencies": {
     "smart-buffer": "^4.2.0",
-    "@buffela/parser": "2.3.0"
+    "@buffela/parser": "2.4.0"
   }
 }

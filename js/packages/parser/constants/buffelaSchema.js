@@ -1,12 +1,19 @@
-import { arrayTypes, lengthTypes, primitiveTypes, subtypeType } from './buffelaTypes.js'
+import {arrayTypes, hybridTypes, lengthTypes, subtypeType, typeMap} from './buffelaTypes.js'
 
 function enumPattern(...options) {
     return `(${options.join('|')})`
 }
 
-const arrayTypePattern = enumPattern(...arrayTypes)
-const lengthTypePattern = enumPattern(...lengthTypes, "\\d+")
-const arraySuffixPattern = `(\\[${lengthTypePattern}\\])*`
+const sizePattern =  "\\d+"
+const hybridTypeNamePattern = enumPattern(...hybridTypes)
+const arrayTypeNamePattern = enumPattern(...arrayTypes)
+const lengthTypeNamePattern = enumPattern(...lengthTypes, sizePattern)
+const specialTypeNamePattern = enumPattern(...arrayTypes, subtypeType)
+
+const parameterlessTypePattern = `[A-Z][a-zA-Z]+(?<!^${specialTypeNamePattern})`
+const hybridTypePattern = `${hybridTypeNamePattern}\\(${sizePattern}\\)`
+const arrayTypePattern = `${arrayTypeNamePattern}\\(${lengthTypeNamePattern}\\)`
+const arraySuffixPattern = `(\\[${lengthTypeNamePattern}\\])*`
 
 /** @type {object} **/
 const buffelaSchema = {
@@ -15,19 +22,21 @@ const buffelaSchema = {
             "type": "object",
             "patternProperties": {
                 "^[a-z][a-zA-Z]*$": {
-                    "anyOf": [
-                        {
-                            "type": "string",
-                            "pattern": `^${arrayTypePattern}\\(${lengthTypePattern}\\)${arraySuffixPattern}$`,
-                            "enum": arrayTypes // For editor suggestions
-                        },
-                        {
-                            "type": "string",
-                            "pattern": `^(?!${subtypeType})(?!${arrayTypePattern})[A-Z][a-zA-Z]+${arraySuffixPattern}$`,
-                            "enum": primitiveTypes // For editor suggestions
-                        },
-                        { "type": "string", "const": subtypeType },
+                    "oneOf": [
                         { "type": "number" },
+                        {
+                            "type": "string",
+                            "pattern": "[]",
+                            "enum": Object.keys(typeMap) // For editor suggestions
+                        },
+                        {
+                            "type": "string",
+                            "const": subtypeType
+                        },
+                        {
+                            "type": "string",
+                            "pattern": `^(${parameterlessTypePattern}|${hybridTypePattern}|${arrayTypePattern})${arraySuffixPattern}$`
+                        },
                     ]
                 },
                 "^[A-Z][a-zA-Z]*$": { "$ref": "#/$defs/DataDefinition" }

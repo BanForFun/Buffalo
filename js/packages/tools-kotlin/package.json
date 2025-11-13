@@ -1,6 +1,6 @@
 {
   "name": "@buffela/tools-kotlin",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Kotlin developer tools for the buffela wire protocol",
   "bin": {
     "buffela-kotlin": "dist/kotlin-tools.js"
@@ -34,8 +34,8 @@
   },
   "homepage": "https://github.com/BanForFun/Buffela#readme",
   "dependencies": {
-    "@buffela/parser": "2.3.0",
-    "@buffela/tools-common": "2.3.0",
+    "@buffela/parser": "2.4.0",
+    "@buffela/tools-common": "2.4.0",
     "yargs": "^18.0.0"
   },
   "devDependencies": {

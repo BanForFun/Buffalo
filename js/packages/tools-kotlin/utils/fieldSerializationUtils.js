@@ -8,14 +8,12 @@ import kotlinx.io.writeUByte
 import kotlinx.io.writeUIntLe
 import kotlinx.io.writeULongLe
 import kotlinx.io.writeUShortLe
+import kotlinx.io.writeString
 import gr.elaevents.buffela.internal.utils.writeStringNt`)
 }
 
-function printWritePrimitive(typeIndex, name) {
+function printWriteSimple(typeIndex, name) {
     switch (typeIndex) {
-        case typeMap.String.index:
-            printer.line(`packet.writeStringNt(${name})`)
-            break;
         case typeMap.Boolean.index:
             printer.line(`packet.writeUByte(if (${name}) 1u else 0u)`)
             break;
@@ -50,7 +48,7 @@ function printWritePrimitive(typeIndex, name) {
             printer.line(`packet.writeULongLe(${name})`)
             break;
         default:
-            throw new Error(`Invalid primitive type with index ${typeIndex}`)
+            throw new Error(`Invalid type with index ${typeIndex}`)
     }
 }
 
@@ -76,7 +74,7 @@ function printWriteArray(field, name, typeIndex) {
     printWriteSize(field.size, `${name}.size`)
     const itemName = `item0`;
     printer.blockStart(`for (${itemName} in ${name}) {`)
-    printWritePrimitive(typeIndex, itemName)
+    printWriteSimple(typeIndex, itemName)
     printer.blockEnd('}')
 }
 
@@ -96,6 +94,13 @@ function printWriteField(field, name, dimension = field.dimensions?.length) {
     if (typeof field.base === 'number') {
         // Built-in type
         switch(field.base) {
+            case typeMap.String.index:
+                if (typeof field.size === 'number')
+                    printer.line(`packet.writeString(${name})`)
+                else
+                    printer.line(`packet.writeStringNt(${name})`)
+
+                break;
             case typeMap.IntArray.index:
                 printWriteArray(field, name, typeMap.Int.index)
                 break;
@@ -134,7 +139,7 @@ function printWriteField(field, name, dimension = field.dimensions?.length) {
                 printer.line(`packet.write(${name})`)
                 break;
             default:
-                printWritePrimitive(field.base, name)
+                printWriteSimple(field.base, name)
         }
     } else if (typeof field.base === 'object') {
         const calf = field.base

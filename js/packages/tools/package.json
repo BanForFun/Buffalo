@@ -1,6 +1,6 @@
 {
   "name": "@buffela/tools",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Type definition generator for the buffela wire protocol",
   "bin": {
     "buffela-to-types": "dist/buffela-to-types.js",
@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/BanForFun/Buffela#readme",
   "dependencies": {
-    "@buffela/parser": "2.3.0",
-    "@buffela/tools-common": "2.3.0"
+    "@buffela/parser": "2.4.0",
+    "@buffela/tools-common": "2.4.0"
   }
 }
