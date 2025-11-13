@@ -1,3 +1,1 @@
-const serializeCalf = require('./utils/calfSerializer')
-
-module.exports = { serializeCalf }
+export { serializeCalf } from './utils/calfSerializer'

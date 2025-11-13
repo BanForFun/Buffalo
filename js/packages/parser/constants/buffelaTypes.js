@@ -25,7 +25,6 @@ function TypeMap(map) {
     return map
 }
 
-const subtypeType = "Type"
 
 const lengthTypeMap = TypeMap({
     "UByte":            NativeType("number",            "UByte"),
@@ -62,17 +61,10 @@ const arrayTypeMap = TypeMap({
     "Buffer":           NativeType("Buffer",            "ByteArray"),
 })
 
-const typeMap = TypeMap({
-    ...primitiveTypeMap,
-    ...arrayTypeMap
-})
+export const subtypeType = "Type"
 
-module.exports = {
-    // Public
-    typeMap,
+export const typeMap = TypeMap({ ...primitiveTypeMap, ...arrayTypeMap })
 
-    // Internal
-    subtypeType,
-    lengthTypes: Object.keys(lengthTypeMap),
-    arrayTypes: Object.keys(arrayTypeMap)
-}
+export const lengthTypes = Object.keys(lengthTypeMap)
+
+export const arrayTypes = Object.keys(arrayTypeMap)

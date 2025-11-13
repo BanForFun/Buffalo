@@ -1,15 +1,16 @@
 {
   "name": "@buffela/deserializer",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Deserializer for the buffela wire protocol",
+  "type": "module",
   "types": "types/index.d.ts",
-  "main": "dist/index.js",
-  "module": "dist/index.d.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

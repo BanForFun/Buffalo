@@ -1,15 +1,16 @@
 {
   "name": "@buffela/parser",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Parser for the buffela wire protocol",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "module": "dist/index.d.mjs",
+  "type": "module",
+  "types": "types/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -20,7 +21,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node tools/buildSchemas.js && tsup index.js --format cjs,esm --clean --out-dir dist && tsc",
+    "build": "node tools/buildSchemas.js && tsup index.js --format cjs,esm --clean --out-dir dist --dts",
     "prepublishOnly": "cp ../../../README.md ."
   },
   "repository": {

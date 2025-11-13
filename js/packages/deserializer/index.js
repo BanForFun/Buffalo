@@ -1,3 +1,1 @@
-const deserializeCalf = require('./utils/calfDeserializer')
-
-module.exports = { deserializeCalf }
+export { deserializeCalf } from './utils/calfDeserializer'

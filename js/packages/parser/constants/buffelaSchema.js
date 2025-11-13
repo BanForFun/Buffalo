@@ -1,4 +1,4 @@
-const { arrayTypes, lengthTypes, subtypeType } = require('./buffelaTypes')
+import { arrayTypes, lengthTypes, subtypeType } from './buffelaTypes.js'
 
 function enumPattern(...options) {
     return `(${options.join('|')})`
@@ -45,4 +45,4 @@ const buffelaSchema = {
     "additionalProperties": false
 }
 
-module.exports = buffelaSchema
+export default buffelaSchema

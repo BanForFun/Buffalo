@@ -1,4 +1,4 @@
-const { calfUtils } = require("@buffela/tools-common");
+const { calfUtils } = require("@buffela/parser");
 
 const {
     printSerializerVariables,
@@ -14,7 +14,7 @@ const {
 } = require("./dataTypeDeserializationUtils");
 
 function printDataTypeClass(type, superClass, superVars) {
-    const modifier = calfUtils.typeClassModifier(type)
+    const modifier = calfUtils.isTypeAbstract(type) ? "sealed" : "final"
     if (superClass)
         printer.blockStart(`${modifier} class ${type.name}: ${superClass} {`)
     else

@@ -1,7 +1,7 @@
-const Ajv = require("ajv");
+import Ajv from 'ajv';
 
-const { typeMap, subtypeType } = require('../constants/buffelaTypes')
-const buffelaSchema = require("../constants/buffelaSchema");
+import { typeMap, subtypeType } from "../constants/buffelaTypes";
+import buffelaSchema from "../constants/buffelaSchema";
 
 const inspectSymbol = Symbol.for("nodejs.util.inspect.custom");
 
@@ -137,7 +137,7 @@ function parseEnum(calf, enumName) {
  * @param {any} buffela
  * @returns {T}
  */
-function parseBuffelaSchema(buffela) {
+export function parseBuffelaSchema(buffela) {
     if (!validateBuffela(buffela)) {
         console.error(ajv.errors?.reverse())
         throw new Error('Schema validation failed')
@@ -158,5 +158,3 @@ function parseBuffelaSchema(buffela) {
 
     return buffela
 }
-
-module.exports = parseBuffelaSchema

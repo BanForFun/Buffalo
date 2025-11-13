@@ -1,7 +1,6 @@
-const {SmartBuffer} = require("smart-buffer");
+import {SmartBuffer} from "smart-buffer";
 
-const {typeMap} = require("@buffela/parser");
-const {calfUtils} = require("@buffela/tools-common");
+import {typeMap, calfUtils} from "@buffela/parser";
 
 /**
  * @param {Field|number} field
@@ -138,10 +137,8 @@ function readCalf(calf, data, packet) {
     }
 }
 
-function deserializeCalf(calf, buffer) {
+export function deserializeCalf(calf, buffer) {
     const data = {}
     readCalf(calf, data, SmartBuffer.fromBuffer(buffer))
     return data
 }
-
-module.exports = deserializeCalf

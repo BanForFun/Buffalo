@@ -1,4 +1,4 @@
-const { calfUtils } = require("@buffela/tools-common")
+const { calfUtils } = require("@buffela/parser")
 
 const {readField} = require("./fieldDeserializationUtils");
 

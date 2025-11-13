@@ -1,5 +1,5 @@
-const {typeMap} = require("@buffela/parser");
-const {stringUtils} = require("@buffela/tools-common");
+const { typeMap } = require("@buffela/parser");
+const { stringUtils } = require("@buffela/tools-common");
 
 const nativeTypes = Object.fromEntries(Object.values(typeMap).map(t => [t.index, t.kt]))
 

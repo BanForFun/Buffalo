@@ -1,5 +1,5 @@
-const fs = require('node:fs')
-const buffelaSchema = require('../constants/buffelaSchema')
+import fs from 'node:fs'
+import buffelaSchema from "../constants/buffelaSchema.js";
 
 try {
     fs.mkdirSync('./schemas')

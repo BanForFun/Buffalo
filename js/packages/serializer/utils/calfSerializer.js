@@ -1,7 +1,6 @@
-const { SmartBuffer } = require('smart-buffer')
+import { SmartBuffer } from 'smart-buffer'
 
-const { typeMap } = require('@buffela/parser')
-const { calfUtils } = require("@buffela/tools-common");
+import { typeMap, calfUtils } from '@buffela/parser'
 
 /**
  * @typedef {object} Field
@@ -149,10 +148,8 @@ function writeCalf(calf, data, packet) {
         packet.writeUInt8(leafIndex, leafIndexOffset)
 }
 
-function serializeCalf(calf, data) {
+export function serializeCalf(calf, data) {
     const packet = new SmartBuffer()
     writeCalf(calf, data, packet)
     return packet.toBuffer()
 }
-
-module.exports = serializeCalf

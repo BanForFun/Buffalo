@@ -1,10 +1,10 @@
 {
   "name": "@buffela/tools-common",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Common utils for the buffela wire protocol developer tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "module": "dist/index.d.mjs",
+  "module": "dist/index.mjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

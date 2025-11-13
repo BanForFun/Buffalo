@@ -1,6 +1,6 @@
 {
   "name": "@buffela/tools-kotlin",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Kotlin developer tools for the buffela wire protocol",
   "bin": {
     "buffela-to-kotlin": "dist/buffela-to-kotlin.js"
