@@ -234,7 +234,7 @@ console.log(authToken)
 Run the kotlin class generator
 
 ```shell
-npx @buffela/tools-kotlin YOUR_BUFFELA_SCHEMA DIRECTORY_TO_PUT_THE_CLASSES --package=YOUR_PACKAGE
+npx @buffela/tools-kotlin generate YOUR_BUFFELA_SCHEMA DIRECTORY_TO_PUT_THE_FILE --package=YOUR_PACKAGE
 ```
 
 This will create a .kt file in the specified directory with the same name as your buffela schema
@@ -268,9 +268,23 @@ fun main() {
 
 ### Validation
 
-We provide a json schema for in-editor validation of your buffela schemas. Since we expect you'll be writing schemas in a development environment, the schema is bundled with the parser that you probably already need. 
+We provide a JSON schema for in-editor validation of your buffela schemas. 
 
-After installing the parser, you can find the schema in `node_modules/@buffela/parser/schemas/buffela.json`
+#### Javascript/Typescript
+
+Since we expect you'll be writing schemas in a development environment, the schema is bundled with the parser that you probably already need. 
+
+After installing the parser, you can find the schema at `node_modules/@buffela/parser/schemas/buffela.json`.
+
+#### Kotlin
+
+You can export the JSON schema through the command line tool:
+
+```
+npx @buffela/tools-kotlin schema buffela.json
+```
+
+This will create a buffela.json file in your current directory.
 
 
 
