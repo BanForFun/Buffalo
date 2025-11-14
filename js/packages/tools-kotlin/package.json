@@ -26,6 +26,7 @@
     "format",
     "serialization",
     "protocol",
+    "schema",
     "binary",
     "kotlin",
     "tools",

@@ -35,6 +35,7 @@
     "serialization",
     "format",
     "protocol",
+    "schema",
     "binary",
     "deserializer"
   ],

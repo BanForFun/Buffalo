@@ -1,6 +1,6 @@
-# Buffela wire protocol
+# Buffela binary format
 
-Buffela (pronounced bah-FEH-lah) is a minimal, schema-based binary wire protocol.
+Buffela (pronounced bah-FEH-lah) is a minimal, schema-based binary format.
 
 You can write the schemas in any json-compatible language, like for example yaml:
 

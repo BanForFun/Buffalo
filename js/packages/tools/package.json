@@ -28,6 +28,7 @@
     "serialization",
     "protocol",
     "binary",
+    "schema",
     "types",
     "tools"
   ],
