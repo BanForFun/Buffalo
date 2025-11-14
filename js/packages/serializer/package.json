@@ -1,7 +1,7 @@
 {
   "name": "@buffela/serializer",
-  "version": "2.4.0",
-  "description": "Serializer for the buffela wire protocol",
+  "version": "2.4.1",
+  "description": "Serializer for the buffela data format schema",
   "type": "module",
   "types": "types/index.d.ts",
   "main": "dist/index.cjs",
@@ -31,8 +31,12 @@
     "buffela",
     "protobuf",
     "wire",
+    "data",
+    "serialization",
+    "format",
     "protocol",
-    "binary"
+    "binary",
+    "serializer"
   ],
   "author": "BanForFun",
   "license": "MIT",
@@ -42,6 +46,6 @@
   "homepage": "https://github.com/BanForFun/Buffela#readme",
   "dependencies": {
     "smart-buffer": "^4.2.0",
-    "@buffela/parser": "2.4.0"
+    "@buffela/parser": "2.4.1"
   }
 }

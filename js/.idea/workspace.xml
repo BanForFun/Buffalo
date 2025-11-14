@@ -4,20 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab4048e1-434e-4ffb-9f53-085e6cb0fc0f" name="Changes" comment="Added enums in json schema for better editor suggestions">
-      <change afterPath="$PROJECT_DIR$/../.idea/jsonSchemas.xml" afterDir="false" />
+    <list default="true" id="ab4048e1-434e-4ffb-9f53-085e6cb0fc0f" name="Changes" comment="Added fixed length strings">
       <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/deserializer/utils/calfDeserializer.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/deserializer/utils/calfDeserializer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/parser/constants/buffelaSchema.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/parser/constants/buffelaSchema.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/parser/constants/buffelaTypes.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/parser/constants/buffelaTypes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/serializer/utils/calfSerializer.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/serializer/utils/calfSerializer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldDeserializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldDeserializationUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldSerializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldSerializationUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sampleBuffela.json" beforeDir="false" afterPath="$PROJECT_DIR$/sampleBuffela.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/Main.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/Main.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/sampleBuffela.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/sampleBuffela.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../sampleBuffela.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../sampleBuffela.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/deserializer/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/deserializer/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/parser/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/parser/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/serializer/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/serializer/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/tools-common/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-common/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/tools/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -185,7 +180,9 @@
       <workItem from="1762959241932" duration="2630000" />
       <workItem from="1763037348584" duration="10508000" />
       <workItem from="1763049151436" duration="5594000" />
-      <workItem from="1763056216000" duration="10319000" />
+      <workItem from="1763056216000" duration="13566000" />
+      <workItem from="1763112129986" duration="6000" />
+      <workItem from="1763112694822" duration="1818000" />
     </task>
     <task id="LOCAL-00001" summary="Refactored code">
       <option name="closed" value="true" />
@@ -379,7 +376,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763056440313</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Added fixed length strings">
+      <option name="closed" value="true" />
+      <created>1763074152579</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1763074152579</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -417,6 +422,7 @@
     <MESSAGE value="Fixed type field deserialization" />
     <MESSAGE value="Added json schema exporter to kotlin tools" />
     <MESSAGE value="Added enums in json schema for better editor suggestions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added enums in json schema for better editor suggestions" />
+    <MESSAGE value="Added fixed length strings" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added fixed length strings" />
   </component>
 </project>

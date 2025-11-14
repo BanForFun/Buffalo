@@ -1,7 +1,7 @@
 {
   "name": "@buffela/tools",
-  "version": "2.4.0",
-  "description": "Type definition generator for the buffela wire protocol",
+  "version": "2.4.1",
+  "description": "Javascript/Typescript developer tools for the buffela data format",
   "bin": {
     "buffela-to-types": "dist/buffela-to-types.js",
     "buffela-to-json": "dist/buffela-to-json.js"
@@ -21,13 +21,14 @@
   },
   "keywords": [
     "buffela",
+    "protobuf",
     "wire",
+    "data",
+    "format",
+    "serialization",
     "protocol",
+    "binary",
     "types",
-    "typescript",
-    "definitions",
-    "devtools",
-    "developer",
     "tools"
   ],
   "author": "BanForFun",
@@ -37,7 +38,7 @@
   },
   "homepage": "https://github.com/BanForFun/Buffela#readme",
   "dependencies": {
-    "@buffela/parser": "2.4.0",
-    "@buffela/tools-common": "2.4.0"
+    "@buffela/parser": "2.4.1",
+    "@buffela/tools-common": "2.4.1"
   }
 }

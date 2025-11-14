@@ -1,7 +1,7 @@
 {
   "name": "@buffela/parser",
-  "version": "2.4.0",
-  "description": "Parser for the buffela wire protocol",
+  "version": "2.4.1",
+  "description": "Parser for the buffela data format",
   "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.cjs",
@@ -28,6 +28,17 @@
     "type": "git",
     "url": "git+https://github.com/BanForFun/Buffela.git"
   },
+  "keywords": [
+    "buffela",
+    "protobuf",
+    "wire",
+    "data",
+    "serialization",
+    "format",
+    "protocol",
+    "binary",
+    "parser"
+  ],
   "author": "BanForFun",
   "license": "MIT",
   "bugs": {
