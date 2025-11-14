@@ -4,20 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab4048e1-434e-4ffb-9f53-085e6cb0fc0f" name="Changes" comment="Rebranded to binary format">
+    <list default="true" id="ab4048e1-434e-4ffb-9f53-085e6cb0fc0f" name="Changes" comment="Improved error handling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/deserializer/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/deserializer/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/deserializer/utils/calfDeserializer.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/deserializer/utils/calfDeserializer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/parser/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/parser/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/serializer/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/serializer/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/packages/serializer/utils/calfSerializer.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/serializer/utils/calfSerializer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-common/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-common/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/dataTypeDeserializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/dataTypeDeserializationUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/dataTypeSerializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/dataTypeSerializationUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldDeserializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldDeserializationUtils.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldSerializationUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools-kotlin/utils/fieldSerializationUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/tools/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/tools/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/sampleBuffela.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../kotlin/examples/simple/src/commonMain/kotlin/sampleBuffela.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -189,7 +179,7 @@
       <workItem from="1763056216000" duration="13566000" />
       <workItem from="1763112129986" duration="6000" />
       <workItem from="1763112694822" duration="1932000" />
-      <workItem from="1763134531768" duration="4800000" />
+      <workItem from="1763134531768" duration="5218000" />
     </task>
     <task id="LOCAL-00001" summary="Refactored code">
       <option name="closed" value="true" />
@@ -407,7 +397,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763134650680</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="Improved error handling">
+      <option name="closed" value="true" />
+      <created>1763139464499</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1763139464499</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -448,6 +446,7 @@
     <MESSAGE value="Added fixed length strings" />
     <MESSAGE value="Fixed readme mistakes and added keywords" />
     <MESSAGE value="Rebranded to binary format" />
-    <option name="LAST_COMMIT_MESSAGE" value="Rebranded to binary format" />
+    <MESSAGE value="Improved error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="Improved error handling" />
   </component>
 </project>

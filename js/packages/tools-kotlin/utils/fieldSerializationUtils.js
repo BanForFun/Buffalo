@@ -107,12 +107,17 @@ function printWriteVariable(field, name, dimension = field.dimensions?.length) {
         // Built-in type
         switch(field.base) {
             case typeMap.String.index:
-                if (typeof field.size === 'number')
+                if (typeof field.size === 'number') {
+                    printer.blockStart(`if (${name}.length != ${field.size}) {`)
+                    printer.line(`throw IllegalStateException("Expected string length '${field.size}' got '\${${name}.length}'")`)
+                    printer.blockEnd('}')
+
                     printer.line(`packet.writeString(${name})`)
-                else if (field.size === null)
+                } else if (field.size === null) {
                     printer.line(`packet.writeStringNt(${name})`)
-                else
+                } else {
                     throw new Error('Invalid string constant size')
+                }
 
                 break;
             case typeMap.IntArray.index:

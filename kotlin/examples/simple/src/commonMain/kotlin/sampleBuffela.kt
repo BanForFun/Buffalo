@@ -42,6 +42,10 @@ sealed class User: gr.elaevents.buffela.schema.Serializable {
 
     override fun serialize(packet: kotlinx.io.Sink) {
         packet.writeUByte(this._leafIndex)
+
+        if (this.userId.length != 36) {
+            throw IllegalStateException("Expected string length '36' got '${this.userId.length}'")
+        }
         packet.writeString(this.userId)
         packet.writeUByte(this.gender.ordinal.toUByte())
         packet.writeUByte(this.hobbies.size.toUByte())

@@ -106,12 +106,16 @@ function writeVariable(field, value, packet, dimension = field.dimensions?.lengt
         // Built-in type
         switch(field.base) {
         case typeMap.String.index:
-            if (typeof field.size === 'number')
+            if (typeof field.size === 'number') {
+                if (value.length !== field.size)
+                    throw new Error(`Expected string length '${field.size}' got '${value.length}'`)
+
                 packet.writeString(value)
-            else if (field.size === null)
+            } else if (field.size === null) {
                 packet.writeStringNT(value)
-            else
+            } else {
                 throw new Error('Invalid string constant size')
+            }
 
             break;
         case typeMap.IntArray.index:
